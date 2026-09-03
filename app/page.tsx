@@ -2,41 +2,10 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { StockCard } from "@/components/stock-card";
 import { SpecTable } from "@/components/spec-table";
+import { STOCK_LISTINGS, getListingBySku, listingHref } from "@/lib/data/stock";
 
-const FEATURED_STOCK = [
-  {
-    href: "/parts/dr-2231",
-    title: "Wärtsilä W32",
-    subtitle: "Cylinder head, complete",
-    sku: "DR-2231",
-    quantity: 4,
-    status: "available" as const,
-  },
-  {
-    href: "/parts/dr-1187",
-    title: "MAN B&W 6S50MC",
-    subtitle: "Fuel injection pump",
-    sku: "DR-1187",
-    quantity: 1,
-    status: "in-stock" as const,
-  },
-  {
-    href: "/parts/dr-0942",
-    title: "Caterpillar 3512C",
-    subtitle: "Turbocharger assembly",
-    sku: "DR-0942",
-    quantity: 2,
-    status: "expected" as const,
-  },
-];
-
-const SPECS = [
-  { label: "Bore", value: "320 mm" },
-  { label: "Stroke", value: "350 mm" },
-  { label: "RPM", value: "750" },
-  { label: "Output", value: "1,920 kW" },
-  { label: "Year", value: "2011" },
-];
+const FEATURED_STOCK = STOCK_LISTINGS.filter((item) => item.category === "part").slice(0, 3);
+const FEATURED_ENGINE = getListingBySku("engine", "DR-1000")!;
 
 export default function Home() {
   return (
@@ -80,7 +49,15 @@ export default function Home() {
           </div>
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURED_STOCK.map((item) => (
-              <StockCard key={item.sku} {...item} />
+              <StockCard
+                key={item.sku}
+                href={listingHref(item)}
+                title={item.title}
+                subtitle={item.subtitle}
+                sku={item.sku}
+                quantity={item.quantity}
+                status={item.status}
+              />
             ))}
           </div>
         </div>
@@ -93,15 +70,21 @@ export default function Home() {
               Specification
             </p>
             <h2 className="mt-2 font-display text-display-lg font-bold text-paper">
-              Wärtsilä W32 — generator set
+              {FEATURED_ENGINE.title}
             </h2>
             <p className="mt-4 max-w-md font-body text-fog">
               Every listing carries the technical data buyers scan first — bore, stroke, RPM,
               output — set in monospace so it reads as data, not decoration.
             </p>
+            <Link
+              href={listingHref(FEATURED_ENGINE)}
+              className="mt-6 inline-block font-body text-sm font-semibold text-blueprint"
+            >
+              View full listing →
+            </Link>
           </div>
           <div className="rounded-md border border-white/10 bg-white/5 p-6">
-            <SpecTable rows={SPECS} variant="dark" />
+            <SpecTable rows={FEATURED_ENGINE.specs} variant="dark" />
           </div>
         </div>
       </section>

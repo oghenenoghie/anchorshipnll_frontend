@@ -1,4 +1,5 @@
 import type { StockStatus } from "@/components/ui/status-badge";
+import type { SpecRow } from "@/components/spec-table";
 
 export type StockCategory = "engine" | "part";
 
@@ -28,6 +29,8 @@ export interface StockListing {
   status: StockStatus;
   quantity: number;
   oemNumbers: string[];
+  description: string;
+  specs: SpecRow[];
 }
 
 export const STOCK_LISTINGS: StockListing[] = [
@@ -40,6 +43,14 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 4,
     oemNumbers: ["W32-CH-2231", "851 111"],
+    description:
+      "Removed from a decommissioned 9L32 generator set, pressure-tested and free of cracks. Valves and guides included.",
+    specs: [
+      { label: "Weight", value: "86 kg" },
+      { label: "Material", value: "Cast iron" },
+      { label: "Fits", value: "Wärtsilä 32 / W32 series" },
+      { label: "Condition", value: "Pressure-tested" },
+    ],
   },
   {
     sku: "DR-1187",
@@ -50,6 +61,14 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 1,
     oemNumbers: ["6S50MC-FIP-1187"],
+    description:
+      "Overhauled fuel injection pump, tested to OEM spec on our test bench prior to listing.",
+    specs: [
+      { label: "Weight", value: "34 kg" },
+      { label: "Material", value: "Forged steel" },
+      { label: "Fits", value: "MAN B&W S50MC series" },
+      { label: "Condition", value: "Overhauled" },
+    ],
   },
   {
     sku: "DR-0942",
@@ -60,6 +79,14 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "expected",
     quantity: 2,
     oemNumbers: ["3512C-TC-0942", "222-9397"],
+    description:
+      "Complete turbocharger assembly, currently in transit from a European teardown; expected within 4–6 weeks.",
+    specs: [
+      { label: "Weight", value: "112 kg" },
+      { label: "Material", value: "Steel / aluminium" },
+      { label: "Fits", value: "Caterpillar 3512C / 3512B" },
+      { label: "Condition", value: "Expected — inbound" },
+    ],
   },
   {
     sku: "DR-1355",
@@ -70,6 +97,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 6,
     oemNumbers: ["M32C-PIS-1355"],
+    description: "New-surplus piston and connecting rod set, still in original crating.",
+    specs: [
+      { label: "Weight", value: "48 kg" },
+      { label: "Material", value: "Steel" },
+      { label: "Fits", value: "MaK M32C series" },
+      { label: "Condition", value: "New surplus" },
+    ],
   },
   {
     sku: "DR-0771",
@@ -80,6 +114,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "reserved",
     quantity: 1,
     oemNumbers: ["TBD620-CL-0771"],
+    description: "Honed to standard bore, reserved pending buyer confirmation.",
+    specs: [
+      { label: "Weight", value: "62 kg" },
+      { label: "Material", value: "Cast iron, honed" },
+      { label: "Fits", value: "Deutz TBD620 series" },
+      { label: "Condition", value: "Reserved" },
+    ],
   },
   {
     sku: "DR-1902",
@@ -90,6 +131,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "sold",
     quantity: 0,
     oemNumbers: ["6L20-CAM-1902"],
+    description: "Reconditioned camshaft, sold to a buyer in Rotterdam — kept here for reference.",
+    specs: [
+      { label: "Weight", value: "58 kg" },
+      { label: "Material", value: "Forged steel" },
+      { label: "Fits", value: "Wärtsilä 20 / 6L20" },
+      { label: "Condition", value: "Sold" },
+    ],
   },
   {
     sku: "DR-1440",
@@ -100,6 +148,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 8,
     oemNumbers: ["L23-30H-GSK-1440"],
+    description: "Full gasket set for a complete overhaul, sourced directly from OEM stock.",
+    specs: [
+      { label: "Weight", value: "6 kg" },
+      { label: "Material", value: "Composite / metal" },
+      { label: "Fits", value: "MAN L23/30H series" },
+      { label: "Condition", value: "New, OEM stock" },
+    ],
   },
   {
     sku: "DR-0685",
@@ -110,6 +165,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 5,
     oemNumbers: ["C32-INJ-0685", "10R-7222"],
+    description: "Remanufactured to Caterpillar tolerances and flow-tested before dispatch.",
+    specs: [
+      { label: "Weight", value: "3 kg" },
+      { label: "Material", value: "Steel" },
+      { label: "Fits", value: "Caterpillar C32 / C32 ACERT" },
+      { label: "Condition", value: "Remanufactured" },
+    ],
   },
   {
     sku: "DR-1078",
@@ -120,6 +182,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "expected",
     quantity: 3,
     oemNumbers: ["6M25-EV-1078"],
+    description: "Complete exhaust valve assembly, expected into our Rotterdam warehouse shortly.",
+    specs: [
+      { label: "Weight", value: "9 kg" },
+      { label: "Material", value: "Nimonic alloy" },
+      { label: "Fits", value: "MaK M25 series" },
+      { label: "Condition", value: "Expected — inbound" },
+    ],
   },
   {
     sku: "DR-0533",
@@ -130,6 +199,13 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 2,
     oemNumbers: ["BF6M1015-WP-0533"],
+    description: "Water pump assembly removed from a low-hour standby genset.",
+    specs: [
+      { label: "Weight", value: "14 kg" },
+      { label: "Material", value: "Cast iron / bronze" },
+      { label: "Fits", value: "Deutz BF6M1015 series" },
+      { label: "Condition", value: "Available" },
+    ],
   },
   {
     sku: "DR-1000",
@@ -140,6 +216,16 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 1,
     oemNumbers: ["W32-9L-GENSET"],
+    description:
+      "Complete 9-cylinder generator set, removed from service after a vessel repower. Running hours and survey report available on request.",
+    specs: [
+      { label: "Cylinders", value: "9L" },
+      { label: "Bore", value: "320 mm" },
+      { label: "Stroke", value: "350 mm" },
+      { label: "RPM", value: "750" },
+      { label: "Output", value: "1,920 kW" },
+      { label: "Year", value: "2011" },
+    ],
   },
   {
     sku: "DR-1041",
@@ -150,6 +236,15 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "expected",
     quantity: 1,
     oemNumbers: ["8M32C-COMPLETE"],
+    description: "Complete 8-cylinder engine expected into our Rotterdam yard; reserve now ahead of arrival.",
+    specs: [
+      { label: "Cylinders", value: "8L" },
+      { label: "Bore", value: "320 mm" },
+      { label: "Stroke", value: "480 mm" },
+      { label: "RPM", value: "600" },
+      { label: "Output", value: "4,000 kW" },
+      { label: "Year", value: "2014" },
+    ],
   },
   {
     sku: "DR-1063",
@@ -160,6 +255,15 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "reserved",
     quantity: 1,
     oemNumbers: ["TBD620V16-COMPLETE"],
+    description: "Complete V16 engine, currently reserved pending contract signature.",
+    specs: [
+      { label: "Cylinders", value: "16V" },
+      { label: "Bore", value: "230 mm" },
+      { label: "Stroke", value: "270 mm" },
+      { label: "RPM", value: "1,500" },
+      { label: "Output", value: "5,200 kW" },
+      { label: "Year", value: "2016" },
+    ],
   },
   {
     sku: "DR-1092",
@@ -170,11 +274,40 @@ export const STOCK_LISTINGS: StockListing[] = [
     status: "available",
     quantity: 2,
     oemNumbers: ["3516C-HD-COMPLETE"],
+    description: "Two complete heavy-duty V16 units, low hours, ex-standby power application.",
+    specs: [
+      { label: "Cylinders", value: "16V" },
+      { label: "Bore", value: "170 mm" },
+      { label: "Stroke", value: "190 mm" },
+      { label: "RPM", value: "1,600" },
+      { label: "Output", value: "2,500 kW" },
+      { label: "Year", value: "2018" },
+    ],
   },
 ];
 
 export function brandSlug(name: string): string {
   return BRANDS.find((b) => b.name === name)?.slug ?? name.toLowerCase();
+}
+
+export function listingHref(item: Pick<StockListing, "sku" | "category">): string {
+  const base = item.category === "engine" ? "engines" : "parts";
+  return `/${base}/${item.sku.toLowerCase()}`;
+}
+
+export function getListingBySku(category: StockCategory, sku: string): StockListing | undefined {
+  return STOCK_LISTINGS.find(
+    (item) => item.category === category && item.sku.toLowerCase() === sku.toLowerCase(),
+  );
+}
+
+export function relatedListings(item: StockListing, limit = 3): StockListing[] {
+  return STOCK_LISTINGS.filter(
+    (candidate) =>
+      candidate.sku !== item.sku &&
+      candidate.category === item.category &&
+      candidate.brand === item.brand,
+  ).slice(0, limit);
 }
 
 export interface StockFilters {

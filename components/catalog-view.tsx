@@ -1,6 +1,6 @@
 import { FacetRail } from "@/components/facet-rail";
 import { StockCard } from "@/components/stock-card";
-import { STOCK_LISTINGS, filterStock, type StockCategory } from "@/lib/data/stock";
+import { STOCK_LISTINGS, filterStock, listingHref, type StockCategory } from "@/lib/data/stock";
 import { paramValues, type SearchParams } from "@/lib/search-params";
 
 export function CatalogView({
@@ -77,7 +77,7 @@ export function CatalogView({
                 {results.map((item) => (
                   <StockCard
                     key={item.sku}
-                    href={`/${category === "engine" ? "engines" : "parts"}/${item.sku.toLowerCase()}`}
+                    href={listingHref(item)}
                     title={item.title}
                     subtitle={item.subtitle}
                     sku={item.sku}
