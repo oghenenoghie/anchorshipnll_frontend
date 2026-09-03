@@ -10,6 +10,10 @@ const STATUS_CONFIG: Record<StockStatus, { label: string; text: string; fill: st
   sold: { label: "Sold", text: "text-steel", fill: "bg-[rgb(59_74_90_/_0.10)]" },
 };
 
+export const STATUS_LABEL: Record<StockStatus, string> = Object.fromEntries(
+  Object.entries(STATUS_CONFIG).map(([status, config]) => [status, config.label]),
+) as Record<StockStatus, string>;
+
 export function StatusBadge({ status, className }: { status: StockStatus; className?: string }) {
   const config = STATUS_CONFIG[status];
   return (
