@@ -52,4 +52,17 @@ body {
       linear-gradient(90deg, rgb(46 110 158 / 0.07) 1px, transparent 1px);
     background-size: 32px 32px;
   }
+
+  /* .hero-fill and .blueprint-grid are both single-class rules writing to
+     background-image — combined on one element, whichever is declared later
+     wins outright instead of layering. This compound selector (higher
+     specificity) merges both explicitly so the two work together as intended. */
+  .hero-fill.blueprint-grid {
+    background-image:
+      linear-gradient(rgb(46 110 158 / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(46 110 158 / 0.07) 1px, transparent 1px),
+      radial-gradient(120% 90% at 78% 0%, rgb(46 110 158 / 0.22), transparent 60%),
+      linear-gradient(180deg, #0e1621 0%, #0b1119 100%);
+    background-size: 32px 32px, 32px 32px, auto, auto;
+  }
 }
