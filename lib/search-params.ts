@@ -6,6 +6,10 @@ export function paramValues(searchParams: SearchParams, key: string): string[] {
   return Array.isArray(raw) ? raw : [raw];
 }
 
+export function firstParam(searchParams: SearchParams, key: string): string {
+  return paramValues(searchParams, key)[0] ?? "";
+}
+
 export function toggleParamHref(
   pathname: string,
   searchParams: SearchParams,

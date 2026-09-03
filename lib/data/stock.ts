@@ -301,6 +301,13 @@ export function getListingBySku(category: StockCategory, sku: string): StockList
   );
 }
 
+// Used to resolve a ?sku= prefill on the RFQ/contact forms, where the category isn't known.
+export function findListingBySku(sku: string): StockListing | undefined {
+  const needle = sku.trim().toLowerCase();
+  if (!needle) return undefined;
+  return STOCK_LISTINGS.find((item) => item.sku.toLowerCase() === needle);
+}
+
 export function relatedListings(item: StockListing, limit = 3): StockListing[] {
   return STOCK_LISTINGS.filter(
     (candidate) =>
