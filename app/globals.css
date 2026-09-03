@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --hull: #0e1621;
+  --steel: #3b4a5a;
+  --fog: #8a97a6;
+  --paper: #f4f2ec;
+  --snow: #ffffff;
+  --blueprint: #2e6e9e;
+  --harbor: #157a8c;
+  --signal: #c6602b;
+  --patina: #6e8b7b;
+  --rust: #9b2c2c;
+
+  /* surfaces / elevation on light */
+  --surface-0: var(--paper);
+  --surface-1: var(--snow);
+  --surface-2: #fbfaf6;
+  --border: rgb(59 74 90 / 0.18);
+  --border-strong: rgb(59 74 90 / 0.32);
+  --ring: var(--blueprint);
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--hull);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+}
+
+@layer utilities {
+  .data-num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hero-fill {
+    background:
+      radial-gradient(120% 90% at 78% 0%, rgb(46 110 158 / 0.22), transparent 60%),
+      linear-gradient(180deg, #0e1621 0%, #0b1119 100%);
+  }
+
+  .blueprint-grid {
+    background-image:
+      linear-gradient(rgb(46 110 158 / 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(46 110 158 / 0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
