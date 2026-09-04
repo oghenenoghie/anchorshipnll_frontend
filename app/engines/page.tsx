@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "Complete marine diesel engines and generator sets, ready to ship.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function EnginesPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <CatalogView

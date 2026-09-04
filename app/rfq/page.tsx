@@ -4,7 +4,8 @@ import { submitRfq } from "./actions";
 import { Field, inputClass } from "@/components/ui/form-field";
 import { FormStatusBanner } from "@/components/ui/form-status";
 import { buttonVariants } from "@/components/ui/button";
-import { findListingBySku, listingHref } from "@/lib/data/stock";
+import { listingHref } from "@/lib/data/stock";
+import { findListingBySku } from "@/lib/db/queries";
 import { firstParam, paramValues, type SearchParams } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 
@@ -21,13 +22,15 @@ const FIELD_ERROR: Record<string, string> = {
   quantity: "Enter a whole number.",
 };
 
-export default function RfqPage({ searchParams }: { searchParams: SearchParams }) {
+export const dynamic = "force-dynamic";
+
+export default async function RfqPage({ searchParams }: { searchParams: SearchParams }) {
   const submitted = firstParam(searchParams, "submitted") === "1";
   const hasError = firstParam(searchParams, "error") === "1";
   const missing = new Set(paramValues(searchParams, "missing").flatMap((v) => v.split(",")));
 
   const sku = firstParam(searchParams, "sku");
-  const listing = findListingBySku(sku);
+  const listing = await findListingBySku(sku);
 
   const defaults = {
     name: firstParam(searchParams, "name"),

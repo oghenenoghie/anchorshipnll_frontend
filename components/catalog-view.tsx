@@ -1,9 +1,10 @@
 import { FacetRail } from "@/components/facet-rail";
 import { StockCard } from "@/components/stock-card";
-import { STOCK_LISTINGS, filterStock, listingHref, type StockCategory } from "@/lib/data/stock";
+import { listingHref, type StockCategory } from "@/lib/data/stock";
+import { getFacetCounts, getListings } from "@/lib/db/queries";
 import { paramValues, type SearchParams } from "@/lib/search-params";
 
-export function CatalogView({
+export async function CatalogView({
   category,
   pathname,
   eyebrow,
@@ -18,15 +19,18 @@ export function CatalogView({
   description: string;
   searchParams: SearchParams;
 }) {
-  const listingsInCategory = STOCK_LISTINGS.filter((item) => item.category === category);
-
   const q = paramValues(searchParams, "q")[0];
   const filters = {
     q,
     brands: paramValues(searchParams, "brand"),
     statuses: paramValues(searchParams, "condition"),
   };
-  const results = filterStock(STOCK_LISTINGS, category, filters);
+
+  const [results, counts] = await Promise.all([
+    getListings(category, filters),
+    getFacetCounts(category),
+  ]);
+
   const hasActiveFilters = filters.brands.length > 0 || filters.statuses.length > 0 || Boolean(q);
 
   return (
@@ -42,11 +46,7 @@ export function CatalogView({
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <aside className="lg:col-span-1">
-            <FacetRail
-              pathname={pathname}
-              searchParams={searchParams}
-              listingsInCategory={listingsInCategory}
-            />
+            <FacetRail pathname={pathname} searchParams={searchParams} counts={counts} />
           </aside>
 
           <div className="lg:col-span-3">

@@ -1,5 +1,4 @@
-import type { StockStatus } from "@/components/ui/status-badge";
-import type { SpecRow } from "@/components/spec-table";
+import type { StockListing } from "@/lib/db/queries";
 
 export type StockCategory = "engine" | "part";
 
@@ -18,22 +17,21 @@ export const BRANDS: Brand[] = [
 
 // DB-backed statuses only (see lib/db/schema.ts stockStatusEnum). "in-stock" is a
 // CTA-adjacent display treatment used ad hoc on the homepage, not a stored status.
-export const STATUSES: StockStatus[] = ["available", "reserved", "expected", "sold"];
+export const STATUSES = ["available", "reserved", "expected", "sold"] as const;
 
-export interface StockListing {
-  sku: string;
-  title: string;
-  subtitle: string;
-  brand: string;
-  category: StockCategory;
-  status: StockStatus;
-  quantity: number;
-  oemNumbers: string[];
-  description: string;
-  specs: SpecRow[];
+export function brandSlug(name: string): string {
+  return BRANDS.find((b) => b.name === name)?.slug ?? name.toLowerCase();
 }
 
-export const STOCK_LISTINGS: StockListing[] = [
+export function listingHref(item: Pick<StockListing, "sku" | "category">): string {
+  const base = item.category === "engine" ? "engines" : "parts";
+  return `/${base}/${item.sku.toLowerCase()}`;
+}
+
+// Seed data for `npm run db:seed` — the source of truth is the Neon database
+// (see lib/db/queries.ts); this only backfills a fresh database with sample
+// listings. Not read by the app at runtime.
+export const SEED_LISTINGS: StockListing[] = [
   {
     sku: "DR-2231",
     title: "Wärtsilä W32",
@@ -285,69 +283,3 @@ export const STOCK_LISTINGS: StockListing[] = [
     ],
   },
 ];
-
-export function brandSlug(name: string): string {
-  return BRANDS.find((b) => b.name === name)?.slug ?? name.toLowerCase();
-}
-
-export function listingHref(item: Pick<StockListing, "sku" | "category">): string {
-  const base = item.category === "engine" ? "engines" : "parts";
-  return `/${base}/${item.sku.toLowerCase()}`;
-}
-
-export function getListingBySku(category: StockCategory, sku: string): StockListing | undefined {
-  return STOCK_LISTINGS.find(
-    (item) => item.category === category && item.sku.toLowerCase() === sku.toLowerCase(),
-  );
-}
-
-// Used to resolve a ?sku= prefill on the RFQ/contact forms, where the category isn't known.
-export function findListingBySku(sku: string): StockListing | undefined {
-  const needle = sku.trim().toLowerCase();
-  if (!needle) return undefined;
-  return STOCK_LISTINGS.find((item) => item.sku.toLowerCase() === needle);
-}
-
-export function relatedListings(item: StockListing, limit = 3): StockListing[] {
-  return STOCK_LISTINGS.filter(
-    (candidate) =>
-      candidate.sku !== item.sku &&
-      candidate.category === item.category &&
-      candidate.brand === item.brand,
-  ).slice(0, limit);
-}
-
-export interface StockFilters {
-  q?: string;
-  brands: string[];
-  statuses: string[];
-}
-
-export function filterStock(
-  listings: StockListing[],
-  category: StockCategory,
-  filters: StockFilters,
-): StockListing[] {
-  const q = filters.q?.trim().toLowerCase();
-
-  return listings.filter((item) => {
-    if (item.category !== category) return false;
-
-    if (filters.brands.length > 0 && !filters.brands.includes(brandSlug(item.brand))) {
-      return false;
-    }
-
-    if (filters.statuses.length > 0 && !filters.statuses.includes(item.status)) {
-      return false;
-    }
-
-    if (q) {
-      const haystack = [item.sku, item.title, item.subtitle, ...item.oemNumbers]
-        .join(" ")
-        .toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-
-    return true;
-  });
-}

@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "Marine diesel spare parts — search by OEM part number or browse by brand.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function PartsPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <CatalogView

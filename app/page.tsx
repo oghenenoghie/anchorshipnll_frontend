@@ -2,12 +2,24 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { StockCard } from "@/components/stock-card";
 import { SpecTable } from "@/components/spec-table";
-import { STOCK_LISTINGS, getListingBySku, listingHref } from "@/lib/data/stock";
+import { listingHref } from "@/lib/data/stock";
+import { getListingBySku, type StockListing } from "@/lib/db/queries";
 
-const FEATURED_STOCK = STOCK_LISTINGS.filter((item) => item.category === "part").slice(0, 3);
-const FEATURED_ENGINE = getListingBySku("engine", "DR-1000")!;
+// Data lives in Neon now, so this can't be statically known at build time —
+// render per-request instead of prerendering (and don't require DB access
+// during `next build`, which CI runs with no DATABASE_URL).
+export const dynamic = "force-dynamic";
 
-export default function Home() {
+const FEATURED_SKUS = ["DR-2231", "DR-1187", "DR-0942"];
+
+export default async function Home() {
+  const [featuredStock, featuredEngine] = await Promise.all([
+    Promise.all(FEATURED_SKUS.map((sku) => getListingBySku("part", sku))),
+    getListingBySku("engine", "DR-1000"),
+  ]);
+
+  const stock = featuredStock.filter((item): item is StockListing => Boolean(item));
+
   return (
     <>
       <section className="hero-fill blueprint-grid relative overflow-hidden">
@@ -34,60 +46,69 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-border bg-surface-0 py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="font-body text-label font-medium uppercase text-fog">In the catalog</p>
-              <h2 className="mt-2 font-display text-display-lg font-bold text-hull">
-                Featured stock
-              </h2>
+      {stock.length > 0 && (
+        <section className="border-b border-border bg-surface-0 py-16 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="font-body text-label font-medium uppercase text-fog">
+                  In the catalog
+                </p>
+                <h2 className="mt-2 font-display text-display-lg font-bold text-hull">
+                  Featured stock
+                </h2>
+              </div>
+              <Link
+                href="/parts"
+                className="hidden font-body text-sm font-semibold text-blueprint sm:block"
+              >
+                View all parts →
+              </Link>
             </div>
-            <Link href="/parts" className="hidden font-body text-sm font-semibold text-blueprint sm:block">
-              View all parts →
-            </Link>
+            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {stock.map((item) => (
+                <StockCard
+                  key={item.sku}
+                  href={listingHref(item)}
+                  title={item.title}
+                  subtitle={item.subtitle}
+                  sku={item.sku}
+                  quantity={item.quantity}
+                  status={item.status}
+                />
+              ))}
+            </div>
           </div>
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURED_STOCK.map((item) => (
-              <StockCard
-                key={item.sku}
-                href={listingHref(item)}
-                title={item.title}
-                subtitle={item.subtitle}
-                sku={item.sku}
-                quantity={item.quantity}
-                status={item.status}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section className="bg-hull py-16 sm:py-24">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <div>
-            <p className="font-body text-label font-medium uppercase text-blueprint">
-              Specification
-            </p>
-            <h2 className="mt-2 font-display text-display-lg font-bold text-paper">
-              {FEATURED_ENGINE.title}
-            </h2>
-            <p className="mt-4 max-w-md font-body text-fog">
-              Every listing carries the technical data buyers scan first — bore, stroke, RPM,
-              output — set in monospace so it reads as data, not decoration.
-            </p>
-            <Link
-              href={listingHref(FEATURED_ENGINE)}
-              className="mt-6 inline-block font-body text-sm font-semibold text-blueprint"
-            >
-              View full listing →
-            </Link>
+      {featuredEngine && (
+        <section className="bg-hull py-16 sm:py-24">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+            <div>
+              <p className="font-body text-label font-medium uppercase text-blueprint">
+                Specification
+              </p>
+              <h2 className="mt-2 font-display text-display-lg font-bold text-paper">
+                {featuredEngine.title}
+              </h2>
+              <p className="mt-4 max-w-md font-body text-fog">
+                Every listing carries the technical data buyers scan first — bore, stroke, RPM,
+                output — set in monospace so it reads as data, not decoration.
+              </p>
+              <Link
+                href={listingHref(featuredEngine)}
+                className="mt-6 inline-block font-body text-sm font-semibold text-blueprint"
+              >
+                View full listing →
+              </Link>
+            </div>
+            <div className="rounded-md border border-white/10 bg-white/5 p-6">
+              <SpecTable rows={featuredEngine.specs} variant="dark" />
+            </div>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/5 p-6">
-            <SpecTable rows={FEATURED_ENGINE.specs} variant="dark" />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }

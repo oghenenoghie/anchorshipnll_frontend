@@ -1,4 +1,5 @@
-import { BRANDS, STATUSES, type StockListing } from "@/lib/data/stock";
+import { BRANDS, STATUSES } from "@/lib/data/stock";
+import type { FacetCounts } from "@/lib/db/queries";
 import { STATUS_LABEL } from "@/components/ui/status-badge";
 import { FacetCheckbox } from "@/components/ui/facet-checkbox";
 import { paramValues, toggleParamHref, type SearchParams } from "@/lib/search-params";
@@ -17,11 +18,11 @@ function FacetGroup({ heading, children }: { heading: string; children: React.Re
 export function FacetRail({
   pathname,
   searchParams,
-  listingsInCategory,
+  counts,
 }: {
   pathname: string;
   searchParams: SearchParams;
-  listingsInCategory: StockListing[];
+  counts: FacetCounts;
 }) {
   const selectedBrands = paramValues(searchParams, "brand");
   const selectedStatuses = paramValues(searchParams, "condition");
@@ -30,7 +31,7 @@ export function FacetRail({
     <nav aria-label="Filters" className="rounded-md border border-border bg-surface-1 p-4">
       <FacetGroup heading="Brand">
         {BRANDS.map((brand) => {
-          const count = listingsInCategory.filter((item) => item.brand === brand.name).length;
+          const count = counts.brands[brand.slug] ?? 0;
           if (count === 0) return null;
           return (
             <FacetCheckbox
@@ -46,7 +47,7 @@ export function FacetRail({
 
       <FacetGroup heading="Condition">
         {STATUSES.map((status) => {
-          const count = listingsInCategory.filter((item) => item.status === status).length;
+          const count = counts.statuses[status] ?? 0;
           if (count === 0) return null;
           return (
             <FacetCheckbox

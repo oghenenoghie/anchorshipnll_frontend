@@ -5,9 +5,10 @@ import { SpecTable } from "@/components/spec-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { StockCard } from "@/components/stock-card";
-import { listingHref, relatedListings, type StockListing } from "@/lib/data/stock";
+import { listingHref } from "@/lib/data/stock";
+import { getRelatedListings, type StockListing } from "@/lib/db/queries";
 
-export function ListingDetail({
+export async function ListingDetail({
   listing,
   backHref,
   backLabel,
@@ -16,7 +17,7 @@ export function ListingDetail({
   backHref: string;
   backLabel: string;
 }) {
-  const related = relatedListings(listing);
+  const related = await getRelatedListings(listing);
   const isSold = listing.status === "sold";
 
   return (

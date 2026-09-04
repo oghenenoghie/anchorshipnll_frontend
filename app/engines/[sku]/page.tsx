@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ListingDetail } from "@/components/listing-detail";
-import { STOCK_LISTINGS, getListingBySku } from "@/lib/data/stock";
+import { getListingBySku } from "@/lib/db/queries";
 
-export function generateStaticParams() {
-  return STOCK_LISTINGS.filter((item) => item.category === "engine").map((item) => ({
-    sku: item.sku.toLowerCase(),
-  }));
-}
+// Data lives in Neon now, so this can't be statically known at build time —
+// render per-request instead of prerendering (and don't require DB access
+// during `next build`, which CI runs with no DATABASE_URL).
+export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }: { params: { sku: string } }): Metadata {
-  const listing = getListingBySku("engine", params.sku);
+export async function generateMetadata({
+  params,
+}: {
+  params: { sku: string };
+}): Promise<Metadata> {
+  const listing = await getListingBySku("engine", params.sku);
   if (!listing) return {};
   return {
     title: `${listing.title} — ${listing.subtitle}`,
@@ -18,8 +21,8 @@ export function generateMetadata({ params }: { params: { sku: string } }): Metad
   };
 }
 
-export default function EngineDetailPage({ params }: { params: { sku: string } }) {
-  const listing = getListingBySku("engine", params.sku);
+export default async function EngineDetailPage({ params }: { params: { sku: string } }) {
+  const listing = await getListingBySku("engine", params.sku);
   if (!listing) notFound();
 
   return <ListingDetail listing={listing} backHref="/engines" backLabel="Engines" />;
