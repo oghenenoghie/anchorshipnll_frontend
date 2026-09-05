@@ -1,4 +1,4 @@
-import { and, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "./index";
 import { stockItems, type SpecRow, type StockCategoryValue, type StockStatusValue } from "./schema";
 import { BRANDS, brandSlug } from "@/lib/data/stock";
@@ -155,4 +155,76 @@ export async function getRelatedListings(item: StockListing, limit = 3): Promise
     .limit(limit);
 
   return rows.map(toListing);
+}
+
+// --- Admin CRUD -------------------------------------------------------
+// Unlike the public queries above, these see every status/category and are
+// only ever called from code behind lib/auth/admin.ts's requireAdmin() gate.
+
+export interface AdminListing extends StockListing {
+  id: string;
+  priceOnApplication: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function toAdminListing(row: typeof stockItems.$inferSelect): AdminListing {
+  return {
+    ...toListing(row),
+    id: row.id,
+    priceOnApplication: row.priceOnApplication,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export interface StockItemInput {
+  sku: string;
+  title: string;
+  subtitle: string;
+  brand: string;
+  category: StockCategoryValue;
+  status: StockStatusValue;
+  quantity: number;
+  oemNumbers: string[];
+  description: string;
+  specs: SpecRow[];
+  priceOnApplication: string | null;
+}
+
+export async function getAllListingsAdmin(): Promise<AdminListing[]> {
+  const db = getDb();
+  const rows = await db.select().from(stockItems).orderBy(desc(stockItems.updatedAt));
+  return rows.map(toAdminListing);
+}
+
+export async function getListingByIdAdmin(id: string): Promise<AdminListing | undefined> {
+  const db = getDb();
+  const rows = await db.select().from(stockItems).where(eq(stockItems.id, id)).limit(1);
+  return rows[0] ? toAdminListing(rows[0]) : undefined;
+}
+
+export async function createListing(input: StockItemInput): Promise<AdminListing> {
+  const db = getDb();
+  const [row] = await db.insert(stockItems).values(input).returning();
+  return toAdminListing(row);
+}
+
+export async function updateListing(id: string, input: StockItemInput): Promise<AdminListing | undefined> {
+  const db = getDb();
+  const [row] = await db
+    .update(stockItems)
+    .set({ ...input, updatedAt: new Date() })
+    .where(eq(stockItems.id, id))
+    .returning();
+  return row ? toAdminListing(row) : undefined;
+}
+
+export async function deleteListing(id: string): Promise<void> {
+  const db = getDb();
+  await db.delete(stockItems).where(eq(stockItems.id, id));
+}
+
+export function isUniqueViolation(err: unknown): boolean {
+  return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";
 }
