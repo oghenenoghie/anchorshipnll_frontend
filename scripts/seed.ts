@@ -1,9 +1,33 @@
 import { getDb } from "../lib/db";
-import { stockItems } from "../lib/db/schema";
+import { drawings, stockItems } from "../lib/db/schema";
 import { SEED_LISTINGS } from "../lib/data/stock";
+import { SEED_DRAWINGS } from "../lib/data/drawings";
 
 async function main() {
   const db = getDb();
+
+  for (const drawing of SEED_DRAWINGS) {
+    await db
+      .insert(drawings)
+      .values({
+        slug: drawing.slug,
+        title: drawing.title,
+        brand: drawing.brand,
+        imageUrl: drawing.imageUrl,
+        hotspots: drawing.hotspots,
+      })
+      .onConflictDoUpdate({
+        target: drawings.slug,
+        set: {
+          title: drawing.title,
+          brand: drawing.brand,
+          imageUrl: drawing.imageUrl,
+          hotspots: drawing.hotspots,
+          updatedAt: new Date(),
+        },
+      });
+    console.log(`seeded drawing ${drawing.slug} — ${drawing.title}`);
+  }
 
   for (const listing of SEED_LISTINGS) {
     await db
@@ -38,7 +62,9 @@ async function main() {
     console.log(`seeded ${listing.sku} — ${listing.title}`);
   }
 
-  console.log(`\nDone — ${SEED_LISTINGS.length} listings seeded.`);
+  console.log(
+    `\nDone — ${SEED_LISTINGS.length} listings and ${SEED_DRAWINGS.length} drawings seeded.`,
+  );
 }
 
 main().catch((err) => {

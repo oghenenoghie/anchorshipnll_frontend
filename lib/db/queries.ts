@@ -1,6 +1,13 @@
 import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "./index";
-import { stockItems, type SpecRow, type StockCategoryValue, type StockStatusValue } from "./schema";
+import {
+  drawings,
+  stockItems,
+  type Hotspot,
+  type SpecRow,
+  type StockCategoryValue,
+  type StockStatusValue,
+} from "./schema";
 import { BRANDS, brandSlug } from "@/lib/data/stock";
 
 export type StockCategory = StockCategoryValue;
@@ -227,4 +234,111 @@ export async function deleteListing(id: string): Promise<void> {
 
 export function isUniqueViolation(err: unknown): boolean {
   return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";
+}
+
+// --- Drawings (exploded-diagram hotspot discovery) ---------------------
+
+export interface DrawingSummary {
+  id: string;
+  slug: string;
+  title: string;
+  brand: string;
+  imageUrl: string;
+}
+
+export interface ResolvedHotspot extends Hotspot {
+  listing?: Pick<StockListing, "sku" | "title" | "subtitle" | "status" | "category">;
+}
+
+export interface DrawingDetail extends DrawingSummary {
+  hotspots: ResolvedHotspot[];
+}
+
+function toDrawingSummary(row: typeof drawings.$inferSelect): DrawingSummary {
+  return { id: row.id, slug: row.slug, title: row.title, brand: row.brand, imageUrl: row.imageUrl };
+}
+
+async function resolveHotspots(hotspots: Hotspot[]): Promise<ResolvedHotspot[]> {
+  const skus = hotspots.map((h) => h.sku).filter((sku): sku is string => Boolean(sku));
+  if (skus.length === 0) return hotspots.map((h) => ({ ...h }));
+
+  const db = getDb();
+  const rows = await db.select().from(stockItems).where(inArray(stockItems.sku, skus));
+  const bySku = new Map(rows.map((row) => [row.sku, toListing(row)]));
+
+  return hotspots.map((h) => ({
+    ...h,
+    listing: h.sku ? bySku.get(h.sku) : undefined,
+  }));
+}
+
+export async function getAllDrawings(): Promise<DrawingSummary[]> {
+  const db = getDb();
+  const rows = await db.select().from(drawings).orderBy(drawings.title);
+  return rows.map(toDrawingSummary);
+}
+
+export async function getDrawingBySlug(slug: string): Promise<DrawingDetail | undefined> {
+  const db = getDb();
+  const rows = await db.select().from(drawings).where(eq(drawings.slug, slug)).limit(1);
+  const row = rows[0];
+  if (!row) return undefined;
+
+  return { ...toDrawingSummary(row), hotspots: await resolveHotspots(row.hotspots) };
+}
+
+// Reverse lookup for the "find this on the exploded diagram" cross-link on
+// listing detail pages — scans the jsonb hotspots array for this sku.
+export async function getDrawingsForSku(sku: string): Promise<DrawingSummary[]> {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(drawings)
+    .where(sql`EXISTS (SELECT 1 FROM jsonb_array_elements(${drawings.hotspots}) elem WHERE elem->>'sku' = ${sku})`);
+  return rows.map(toDrawingSummary);
+}
+
+// --- Drawings admin CRUD -------------------------------------------------
+
+export interface DrawingInput {
+  slug: string;
+  title: string;
+  brand: string;
+  imageUrl: string;
+  hotspots: Hotspot[];
+}
+
+export async function getAllDrawingsAdmin(): Promise<DrawingDetail[]> {
+  const db = getDb();
+  const rows = await db.select().from(drawings).orderBy(desc(drawings.updatedAt));
+  return Promise.all(rows.map(async (row) => ({ ...toDrawingSummary(row), hotspots: await resolveHotspots(row.hotspots) })));
+}
+
+export async function getDrawingByIdAdmin(id: string): Promise<DrawingDetail | undefined> {
+  const db = getDb();
+  const rows = await db.select().from(drawings).where(eq(drawings.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) return undefined;
+  return { ...toDrawingSummary(row), hotspots: await resolveHotspots(row.hotspots) };
+}
+
+export async function createDrawing(input: DrawingInput): Promise<DrawingSummary> {
+  const db = getDb();
+  const [row] = await db.insert(drawings).values(input).returning();
+  return toDrawingSummary(row);
+}
+
+export async function updateDrawing(id: string, input: DrawingInput): Promise<DrawingSummary | undefined> {
+  const db = getDb();
+  const [row] = await db
+    .update(drawings)
+    .set({ ...input, updatedAt: new Date() })
+    .where(eq(drawings.id, id))
+    .returning();
+  return row ? toDrawingSummary(row) : undefined;
+}
+
+export async function deleteDrawing(id: string): Promise<void> {
+  const db = getDb();
+  await db.delete(drawings).where(eq(drawings.id, id));
 }

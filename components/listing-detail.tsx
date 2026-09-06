@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { StockCard } from "@/components/stock-card";
 import { listingHref } from "@/lib/data/stock";
-import { getRelatedListings, type StockListing } from "@/lib/db/queries";
+import { getDrawingsForSku, getRelatedListings, type StockListing } from "@/lib/db/queries";
 
 export async function ListingDetail({
   listing,
@@ -17,7 +17,10 @@ export async function ListingDetail({
   backHref: string;
   backLabel: string;
 }) {
-  const related = await getRelatedListings(listing);
+  const [related, drawings] = await Promise.all([
+    getRelatedListings(listing),
+    getDrawingsForSku(listing.sku),
+  ]);
   const isSold = listing.status === "sold";
 
   return (
@@ -59,6 +62,15 @@ export async function ListingDetail({
             <p className="mt-4 font-mono text-data data-num text-fog">
               {isSold ? "Sold — similar listings below" : `${listing.quantity} in stock`}
             </p>
+
+            {drawings.length > 0 && (
+              <Link
+                href={`/drawings/${drawings[0].slug}`}
+                className="mt-3 inline-block font-body text-sm font-medium text-blueprint hover:underline"
+              >
+                Find this on the exploded diagram →
+              </Link>
+            )}
 
             <div className="mt-8 flex flex-wrap gap-4">
               <Link

@@ -27,6 +27,29 @@ export interface SpecRow {
   value: string;
 }
 
+// A callout on an exploded diagram. `sku` links to stock_items.sku (not a
+// DB foreign key — jsonb can't enforce one) so a hotspot can point at a
+// listing without knowing its uuid, matching the sku-first identity the rest
+// of the app uses. Null until an admin assigns it.
+export interface Hotspot {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+  sku: string | null;
+}
+
+export const drawings = pgTable("drawings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  brand: text("brand").notNull(),
+  imageUrl: text("image_url").notNull(),
+  hotspots: jsonb("hotspots").$type<Hotspot[]>().notNull().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const stockItems = pgTable(
   "stock_items",
   {

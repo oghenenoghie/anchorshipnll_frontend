@@ -26,6 +26,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             Admin
           </Link>
           <div className="flex items-center gap-5">
+            <Link href="/admin" className="font-body text-xs text-fog transition-colors hover:text-paper">
+              Stock
+            </Link>
+            <Link href="/admin/drawings" className="font-body text-xs text-fog transition-colors hover:text-paper">
+              Drawings
+            </Link>
             <Link href="/" className="font-body text-xs text-fog transition-colors hover:text-paper">
               View site
             </Link>

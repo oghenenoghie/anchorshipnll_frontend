@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title">
+  <title id="title">MaK M32C piston assembly — exploded view</title>
+  <rect x="0" y="0" width="1200" height="900" fill="#F4F2EC" />
+
+  <!-- central exploded-view axis -->
+  <line x1="600" y1="80" x2="600" y2="800" stroke="#8A97A6" stroke-width="1.5" stroke-dasharray="2 8" opacity="0.6" />
+
+  <!-- 01 piston crown -->
+  <path d="M 520 110 Q 600 80 680 110 L 680 190 L 520 190 Z" fill="none" stroke="#2E6E9E" stroke-width="2.5" />
+  <line x1="680" y1="140" x2="900" y2="130" stroke="#8A97A6" stroke-width="1.25" stroke-dasharray="3 5" />
+
+  <!-- 02 piston rings -->
+  <rect x="510" y="220" width="180" height="16" rx="3" fill="none" stroke="#2E6E9E" stroke-width="2" />
+  <rect x="510" y="248" width="180" height="16" rx="3" fill="none" stroke="#2E6E9E" stroke-width="2" />
+  <rect x="510" y="276" width="180" height="16" rx="3" fill="none" stroke="#2E6E9E" stroke-width="2" />
+  <line x1="510" y1="270" x2="300" y2="270" stroke="#8A97A6" stroke-width="1.25" stroke-dasharray="3 5" />
+
+  <!-- 03 piston body + pin (linked part) -->
+  <rect x="490" y="320" width="220" height="200" rx="18" fill="none" stroke="#2E6E9E" stroke-width="2.5" />
+  <line x1="490" y1="400" x2="710" y2="400" stroke="#2E6E9E" stroke-width="1.5" opacity="0.4" />
+  <circle cx="600" cy="400" r="26" fill="none" stroke="#2E6E9E" stroke-width="2.5" />
+  <line x1="710" y1="400" x2="920" y2="420" stroke="#8A97A6" stroke-width="1.25" stroke-dasharray="3 5" />
+
+  <!-- 04 connecting rod -->
+  <path d="M 600 560 L 600 640 M 560 640 L 640 640 L 620 760 L 580 760 Z"
+        fill="none" stroke="#2E6E9E" stroke-width="2.5" stroke-linejoin="round" />
+  <ellipse cx="600" cy="760" rx="46" ry="24" fill="none" stroke="#2E6E9E" stroke-width="2.5" />
+  <line x1="580" y1="650" x2="300" y2="650" stroke="#8A97A6" stroke-width="1.25" stroke-dasharray="3 5" />
+</svg>
