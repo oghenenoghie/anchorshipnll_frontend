@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { sendNotificationEmail } from "@/lib/email";
+import { recordEnquiry } from "@/lib/enquiries";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,7 +27,7 @@ export async function submitRfq(formData: FormData): Promise<void> {
   if (!company) missing.push("company");
   if (!email || !EMAIL_RE.test(email)) missing.push("email");
   if (!sku) missing.push("sku");
-  if (quantity && (!/^\d+$/.test(quantity) || Number(quantity) < 1)) missing.push("quantity");
+  if (quantity && (!/^\d+$/.test(quantity) || Number(quantity) < 1 || Number(quantity) > 1_000_000)) missing.push("quantity");
 
   if (missing.length > 0) {
     redirect(
@@ -45,8 +45,18 @@ export async function submitRfq(formData: FormData): Promise<void> {
     );
   }
 
-  try {
-    await sendNotificationEmail({
+  const recorded = await recordEnquiry(
+    {
+      kind: "rfq",
+      name,
+      email,
+      company,
+      phone: phone || null,
+      sku,
+      quantity: quantity ? Number(quantity) : null,
+      message,
+    },
+    {
       subject: `RFQ — ${sku}`,
       replyTo: email,
       text: [
@@ -59,9 +69,10 @@ export async function submitRfq(formData: FormData): Promise<void> {
         "",
         message || "(no additional details)",
       ].join("\n"),
-    });
-  } catch (err) {
-    console.error("RFQ email send failed", err);
+    },
+  );
+
+  if (!recorded) {
     redirect(
       `/rfq?${buildQuery({ error: "1", missing: "send", name, company, email, phone, sku, quantity, message })}`,
     );

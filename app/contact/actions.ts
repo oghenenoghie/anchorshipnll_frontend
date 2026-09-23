@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { sendNotificationEmail } from "@/lib/email";
+import { recordEnquiry } from "@/lib/enquiries";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -30,16 +30,18 @@ export async function submitContact(formData: FormData): Promise<void> {
     );
   }
 
-  try {
-    await sendNotificationEmail({
+  const recorded = await recordEnquiry(
+    { kind: "contact", name, email, sku: sku || null, message },
+    {
       subject: sku ? `Contact — re: ${sku}` : "Contact form",
       replyTo: email,
       text: [`Name: ${name}`, `Email: ${email}`, sku ? `Regarding SKU: ${sku}` : undefined, "", message]
         .filter((line): line is string => Boolean(line))
         .join("\n"),
-    });
-  } catch (err) {
-    console.error("Contact email send failed", err);
+    },
+  );
+
+  if (!recorded) {
     redirect(`/contact?${buildQuery({ error: "1", missing: "send", name, email, sku, message })}`);
   }
 
