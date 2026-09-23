@@ -32,6 +32,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <Link href="/admin/drawings" className="font-body text-xs text-fog transition-colors hover:text-paper">
               Drawings
             </Link>
+            <Link href="/admin/enquiries" className="font-body text-xs text-fog transition-colors hover:text-paper">
+              Enquiries
+            </Link>
             <Link href="/" className="font-body text-xs text-fog transition-colors hover:text-paper">
               View site
             </Link>

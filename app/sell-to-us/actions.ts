@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { sendNotificationEmail } from "@/lib/email";
+import { recordEnquiry } from "@/lib/enquiries";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -45,8 +45,18 @@ export async function submitSellToUs(formData: FormData): Promise<void> {
     );
   }
 
-  try {
-    await sendNotificationEmail({
+  const recorded = await recordEnquiry(
+    {
+      kind: "sell_to_us",
+      name,
+      email,
+      company,
+      phone: phone || null,
+      brand,
+      location: location || null,
+      message: description,
+    },
+    {
       subject: `Sell to us — ${brand}`,
       replyTo: email,
       text: [
@@ -59,9 +69,10 @@ export async function submitSellToUs(formData: FormData): Promise<void> {
         "",
         description,
       ].join("\n"),
-    });
-  } catch (err) {
-    console.error("Sell-to-us email send failed", err);
+    },
+  );
+
+  if (!recorded) {
     redirect(
       `/sell-to-us?${buildQuery({
         error: "1",

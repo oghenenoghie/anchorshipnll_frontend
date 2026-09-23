@@ -110,9 +110,22 @@ time.
   `requireAdmin()`; adding RLS on top would be defense-in-depth, not a
   functional gap, and is still open.
 
+## Enquiries
+
+RFQ, contact, and sell-to-us submissions are saved to the `enquiries` table
+before the notification email goes out (`lib/enquiries.ts`). Either one
+succeeding counts as received: if the DB write fails the email still goes out,
+and if the email fails the lead is still in the database. The submitter only
+sees the "try again" error when both fail. `email_sent` records whether the
+notification actually went out.
+
+`/admin/enquiries` lists them newest first, filterable by type and status
+(`new` / `handled`). Each one opens to the full message, with a reply-by-email
+link, mark handled / reopen, and delete.
+
 ## Admin
 
-`/admin` is a CRUD UI over `stock_items` — create, edit, and delete listings
+`/admin` is a CRUD UI over `stock_items` (plus `drawings`, and the `enquiries` inbox above) — create, edit, and delete listings
 of any status/category without touching the database directly.
 
 - **Auth**: a single admin credential, not a full identity provider. Neon

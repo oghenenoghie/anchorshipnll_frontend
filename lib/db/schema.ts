@@ -8,6 +8,7 @@ import {
   uuid,
   jsonb,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const stockStatusEnum = pgEnum("stock_status", [
@@ -71,4 +72,36 @@ export const stockItems = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("stock_items_oem_numbers_gin_idx").using("gin", table.oemNumbers)],
+);
+
+export const enquiryKindEnum = pgEnum("enquiry_kind", ["rfq", "contact", "sell_to_us"]);
+export const enquiryStatusEnum = pgEnum("enquiry_status", ["new", "handled"]);
+
+export type EnquiryKindValue = (typeof enquiryKindEnum.enumValues)[number];
+export type EnquiryStatusValue = (typeof enquiryStatusEnum.enumValues)[number];
+
+// Every public-form submission (RFQ, contact, sell-to-us), saved before the
+// notification email goes out so a lead survives a failed send. Fields a given
+// form doesn't collect stay null. `sku` is free text, not a foreign key — buyers
+// quote OEM numbers and SKUs that may not match a listing.
+export const enquiries = pgTable(
+  "enquiries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    kind: enquiryKindEnum("kind").notNull(),
+    status: enquiryStatusEnum("status").notNull().default("new"),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    company: text("company"),
+    phone: text("phone"),
+    sku: text("sku"),
+    quantity: integer("quantity"),
+    brand: text("brand"),
+    location: text("location"),
+    message: text("message").notNull().default(""),
+    emailSent: boolean("email_sent").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("enquiries_status_created_at_idx").on(table.status, table.createdAt)],
 );

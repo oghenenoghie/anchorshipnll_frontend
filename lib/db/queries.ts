@@ -2,7 +2,10 @@ import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "./index";
 import {
   drawings,
+  enquiries,
   stockItems,
+  type EnquiryKindValue,
+  type EnquiryStatusValue,
   type Hotspot,
   type SpecRow,
   type StockCategoryValue,
@@ -341,4 +344,65 @@ export async function updateDrawing(id: string, input: DrawingInput): Promise<Dr
 export async function deleteDrawing(id: string): Promise<void> {
   const db = getDb();
   await db.delete(drawings).where(eq(drawings.id, id));
+}
+
+// --- Enquiries (RFQ / contact / sell-to-us submissions) ----------------
+
+export type Enquiry = typeof enquiries.$inferSelect;
+
+export interface EnquiryInput {
+  kind: EnquiryKindValue;
+  name: string;
+  email: string;
+  company?: string | null;
+  phone?: string | null;
+  sku?: string | null;
+  quantity?: number | null;
+  brand?: string | null;
+  location?: string | null;
+  message?: string;
+}
+
+export async function createEnquiry(input: EnquiryInput): Promise<Enquiry> {
+  const db = getDb();
+  const [row] = await db.insert(enquiries).values(input).returning();
+  return row;
+}
+
+export async function markEnquiryEmailSent(id: string): Promise<void> {
+  const db = getDb();
+  await db.update(enquiries).set({ emailSent: true }).where(eq(enquiries.id, id));
+}
+
+export interface EnquiryFilters {
+  kind?: EnquiryKindValue;
+  status?: EnquiryStatusValue;
+}
+
+export async function getEnquiriesAdmin(filters: EnquiryFilters = {}): Promise<Enquiry[]> {
+  const db = getDb();
+  const conditions: SQL[] = [];
+  if (filters.kind) conditions.push(eq(enquiries.kind, filters.kind));
+  if (filters.status) conditions.push(eq(enquiries.status, filters.status));
+  return db
+    .select()
+    .from(enquiries)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(enquiries.createdAt));
+}
+
+export async function getEnquiryByIdAdmin(id: string): Promise<Enquiry | undefined> {
+  const db = getDb();
+  const rows = await db.select().from(enquiries).where(eq(enquiries.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function setEnquiryStatus(id: string, status: EnquiryStatusValue): Promise<void> {
+  const db = getDb();
+  await db.update(enquiries).set({ status, updatedAt: new Date() }).where(eq(enquiries.id, id));
+}
+
+export async function deleteEnquiry(id: string): Promise<void> {
+  const db = getDb();
+  await db.delete(enquiries).where(eq(enquiries.id, id));
 }
