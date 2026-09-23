@@ -1,7 +1,7 @@
 import { StatusBadge, type StockStatus } from "@/components/ui/status-badge";
 
-// Placeholder gallery — swap for next/image against the Cloudinary public_id
-// stored on stock_items once condition photography is wired in.
+// Placeholder gallery — swap for next/image once condition photography
+// uploads are wired in.
 export function ListingGallery({ status, alt }: { status: StockStatus; alt: string }) {
   return (
     <div>
