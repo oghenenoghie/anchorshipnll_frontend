@@ -39,7 +39,11 @@ export async function ListingDetail({
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-          <ListingGallery status={listing.status} alt={`${listing.title} — ${listing.subtitle}`} />
+          <ListingGallery
+            status={listing.status}
+            alt={`${listing.title} — ${listing.subtitle}`}
+            images={listing.images}
+          />
 
           <div>
             <p className="font-body text-label font-medium uppercase text-blueprint">
@@ -139,6 +143,7 @@ export async function ListingDetail({
                   sku={item.sku}
                   quantity={item.quantity}
                   status={item.status}
+                  image={item.images[0]}
                 />
               ))}
             </div>

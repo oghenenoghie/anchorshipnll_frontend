@@ -1,0 +1,1 @@
+ALTER TABLE "stock_items" ADD COLUMN "images" jsonb DEFAULT '[]'::jsonb NOT NULL;

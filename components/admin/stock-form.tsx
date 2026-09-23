@@ -1,5 +1,6 @@
 import { Field, inputClass } from "@/components/ui/form-field";
 import { buttonVariants } from "@/components/ui/button";
+import { PhotoManager } from "@/components/admin/photo-manager";
 import { BRANDS, STATUSES } from "@/lib/data/stock";
 import type { AdminListing } from "@/lib/db/queries";
 import { cn } from "@/lib/utils";
@@ -159,6 +160,13 @@ export function StockForm({
             className={cn(inputClass(), "font-mono")}
           />
         </Field>
+      </div>
+
+      <div>
+        <p className="block font-body text-label font-medium uppercase text-fog">Photos</p>
+        <div className="mt-1.5">
+          <PhotoManager defaults={defaults?.images ?? []} altHint={defaults?.title} />
+        </div>
       </div>
 
       <Field label="Description" htmlFor="description">

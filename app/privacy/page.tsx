@@ -91,7 +91,7 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <span className="font-medium text-hull">Neon</span> — hosts our database
-                  (Postgres) and, where used, authentication.
+                  (Postgres), listing photography and, where used, authentication.
                 </li>
               </ul>
               <p>We don&apos;t share your information with anyone beyond these processors.</p>

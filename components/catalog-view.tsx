@@ -83,6 +83,7 @@ export async function CatalogView({
                     sku={item.sku}
                     quantity={item.quantity}
                     status={item.status}
+                    image={item.images[0]}
                   />
                 ))}
               </div>

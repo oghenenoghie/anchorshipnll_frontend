@@ -75,6 +75,7 @@ export default async function Home() {
                   sku={item.sku}
                   quantity={item.quantity}
                   status={item.status}
+                  image={item.images[0]}
                 />
               ))}
             </div>

@@ -31,7 +31,7 @@ export function listingHref(item: Pick<StockListing, "sku" | "category">): strin
 // Seed data for `npm run db:seed` — the source of truth is the Neon database
 // (see lib/db/queries.ts); this only backfills a fresh database with sample
 // listings. Not read by the app at runtime.
-export const SEED_LISTINGS: StockListing[] = [
+export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
   {
     sku: "DR-2231",
     title: "Wärtsilä W32",
