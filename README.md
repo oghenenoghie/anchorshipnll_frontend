@@ -19,7 +19,7 @@ for the existing Django site this frontend is being built alongside.
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in Neon / admin values
+cp .env.example .env.local   # fill in Neon / storage / admin values
 npm run admin:hash-password -- "your-password"   # paste output into ADMIN_PASSWORD_HASH
 npm run dev
 ```
@@ -108,6 +108,26 @@ time.
   every write already goes through `lib/db/queries.ts` on the server, gated by
   `requireAdmin()`; adding RLS on top would be defense-in-depth, not a
   functional gap, and is still open.
+
+## Listing photos
+
+Photos live in Neon Object Storage, in the `public_read` bucket named by
+`STORAGE_BUCKET` (default `stock-photos`) on the same branch as the database.
+The database only stores each photo's key and description, in
+`stock_items.images` (first photo = primary).
+
+- **Upload:** the admin stock form's photo manager posts each file to
+  `POST /api/admin/photos` (admin session required; JPEG/PNG/WebP/AVIF, max
+  15 MB), which writes it to the bucket under `stock/<uuid>.<ext>` and returns
+  the key. The photo is attached to the listing when the form is saved.
+- **Delete:** removing a photo from a listing, or deleting the listing, deletes
+  the file from the bucket after the save succeeds (best effort). Photos
+  uploaded to a form that is never saved are left in the bucket.
+- **Display:** pages build the public URL from `AWS_ENDPOINT_URL_S3` and serve
+  it through `next/image`, which resizes and converts to AVIF/WebP. Without
+  storage env vars, listings fall back to a placeholder and uploads return 503.
+- **Branches:** storage branches with the database, so a preview branch sees
+  the parent's photos and its own uploads stay on that branch.
 
 ## Enquiries
 

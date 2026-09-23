@@ -6,11 +6,13 @@ import { requireAdmin } from "@/lib/auth/admin";
 import {
   createListing,
   deleteListing,
+  getListingByIdAdmin,
   isUniqueViolation,
   updateListing,
   type StockItemInput,
 } from "@/lib/db/queries";
-import type { SpecRow, StockCategoryValue, StockStatusValue } from "@/lib/db/schema";
+import type { SpecRow, StockCategoryValue, StockImage, StockStatusValue } from "@/lib/db/schema";
+import { PHOTO_KEY_RE, deletePhotos } from "@/lib/storage";
 import { STATUSES } from "@/lib/data/stock";
 
 const CATEGORIES: StockCategoryValue[] = ["part", "engine"];
@@ -28,6 +30,23 @@ function parseSpecs(value: string): SpecRow[] {
     if (idx === -1) return { label: line, value: "" };
     return { label: line.slice(0, idx).trim(), value: line.slice(idx + 1).trim() };
   });
+}
+
+// Only keys minted by the upload route are accepted, so a tampered form can't
+// point a listing at an arbitrary object.
+function parseImages(value: string): StockImage[] {
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set<string>();
+    return parsed
+      .filter((i): i is Record<string, unknown> => typeof i === "object" && i !== null)
+      .map((i) => ({ key: String(i.key ?? ""), alt: String(i.alt ?? "").trim().slice(0, 200) }))
+      .filter((i) => PHOTO_KEY_RE.test(i.key) && !seen.has(i.key) && seen.add(i.key))
+      .slice(0, 30);
+  } catch {
+    return [];
+  }
 }
 
 function buildQuery(params: Record<string, string | undefined>): string {
@@ -50,6 +69,7 @@ function readInput(formData: FormData): { input: StockItemInput; missing: string
   const oemNumbers = parseLines(String(formData.get("oemNumbers") ?? ""));
   const description = String(formData.get("description") ?? "").trim();
   const specs = parseSpecs(String(formData.get("specs") ?? ""));
+  const images = parseImages(String(formData.get("images") ?? "[]"));
 
   const missing: string[] = [];
   if (!sku) missing.push("sku");
@@ -73,6 +93,7 @@ function readInput(formData: FormData): { input: StockItemInput; missing: string
       oemNumbers,
       description,
       specs,
+      images,
       priceOnApplication: priceRaw || null,
     },
     missing,
@@ -114,9 +135,16 @@ export async function updateStockItemAction(id: string, formData: FormData): Pro
 
   let failure: string | undefined;
   let notFound = false;
+  let removedKeys: string[] = [];
   try {
-    const updated = await updateListing(id, input);
-    if (!updated) notFound = true;
+    const previous = await getListingByIdAdmin(id);
+    const updated = previous ? await updateListing(id, input) : undefined;
+    if (!previous || !updated) {
+      notFound = true;
+    } else {
+      const kept = new Set(input.images.map((image) => image.key));
+      removedKeys = previous.images.map((image) => image.key).filter((key) => !kept.has(key));
+    }
   } catch (err) {
     failure = isUniqueViolation(err) ? "sku_taken" : "save_failed";
   }
@@ -126,6 +154,8 @@ export async function updateStockItemAction(id: string, formData: FormData): Pro
     redirect(`/admin/stock/${id}/edit?${buildQuery({ error: "1", missing: failure })}`);
   }
 
+  await deletePhotos(removedKeys);
+
   revalidatePath("/admin");
   revalidatePath("/parts");
   revalidatePath("/engines");
@@ -134,7 +164,8 @@ export async function updateStockItemAction(id: string, formData: FormData): Pro
 
 export async function deleteStockItemAction(id: string): Promise<void> {
   await requireAdmin();
-  await deleteListing(id);
+  const images = await deleteListing(id);
+  await deletePhotos(images.map((image) => image.key));
 
   revalidatePath("/admin");
   revalidatePath("/parts");

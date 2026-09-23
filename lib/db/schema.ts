@@ -23,6 +23,13 @@ export const stockCategoryEnum = pgEnum("stock_category", ["part", "engine"]);
 export type StockStatusValue = (typeof stockStatusEnum.enumValues)[number];
 export type StockCategoryValue = (typeof stockCategoryEnum.enumValues)[number];
 
+// A listing photo in object storage (see lib/storage.ts). Array order is
+// display order; the first photo is the primary one shown on cards.
+export interface StockImage {
+  key: string;
+  alt: string;
+}
+
 export interface SpecRow {
   label: string;
   value: string;
@@ -66,6 +73,7 @@ export const stockItems = pgTable(
     quantity: integer("quantity").notNull().default(0),
     description: text("description").notNull().default(""),
     specs: jsonb("specs").$type<SpecRow[]>().notNull().default([]),
+    images: jsonb("images").$type<StockImage[]>().notNull().default([]),
     priceOnApplication: numeric("price_on_application", { precision: 12, scale: 2 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

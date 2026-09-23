@@ -9,9 +9,11 @@ import {
   type Hotspot,
   type SpecRow,
   type StockCategoryValue,
+  type StockImage,
   type StockStatusValue,
 } from "./schema";
 import { BRANDS, brandSlug } from "@/lib/data/stock";
+import { publicUrl } from "@/lib/storage";
 
 export type StockCategory = StockCategoryValue;
 
@@ -26,6 +28,20 @@ export interface StockListing {
   oemNumbers: string[];
   description: string;
   specs: SpecRow[];
+  images: ListingImage[];
+}
+
+export interface ListingImage extends StockImage {
+  url: string;
+}
+
+// Drops photos when storage isn't configured (publicUrl returns null), so the
+// UI falls back to its placeholder rather than rendering broken images.
+function toListingImages(images: StockImage[]): ListingImage[] {
+  return images.flatMap((image) => {
+    const url = publicUrl(image.key);
+    return url ? [{ ...image, url }] : [];
+  });
 }
 
 function toListing(row: typeof stockItems.$inferSelect): StockListing {
@@ -40,6 +56,7 @@ function toListing(row: typeof stockItems.$inferSelect): StockListing {
     oemNumbers: row.oemNumbers,
     description: row.description,
     specs: row.specs,
+    images: toListingImages(row.images),
   };
 }
 
@@ -171,7 +188,14 @@ export async function getRelatedListings(item: StockListing, limit = 3): Promise
 // Unlike the public queries above, these see every status/category and are
 // only ever called from code behind lib/auth/admin.ts's requireAdmin() gate.
 
-export interface AdminListing extends StockListing {
+// Unlike the public listing, admin keeps every stored photo even when its URL
+// can't be built, so saving the form never silently drops photos.
+export interface AdminImage extends StockImage {
+  url: string | null;
+}
+
+export interface AdminListing extends Omit<StockListing, "images"> {
+  images: AdminImage[];
   id: string;
   priceOnApplication: string | null;
   createdAt: string;
@@ -181,6 +205,7 @@ export interface AdminListing extends StockListing {
 function toAdminListing(row: typeof stockItems.$inferSelect): AdminListing {
   return {
     ...toListing(row),
+    images: row.images.map((image) => ({ ...image, url: publicUrl(image.key) })),
     id: row.id,
     priceOnApplication: row.priceOnApplication,
     createdAt: row.createdAt.toISOString(),
@@ -199,6 +224,7 @@ export interface StockItemInput {
   oemNumbers: string[];
   description: string;
   specs: SpecRow[];
+  images: StockImage[];
   priceOnApplication: string | null;
 }
 
@@ -230,9 +256,11 @@ export async function updateListing(id: string, input: StockItemInput): Promise<
   return row ? toAdminListing(row) : undefined;
 }
 
-export async function deleteListing(id: string): Promise<void> {
+// Returns the deleted listing's photos so the caller can remove them from storage.
+export async function deleteListing(id: string): Promise<StockImage[]> {
   const db = getDb();
-  await db.delete(stockItems).where(eq(stockItems.id, id));
+  const rows = await db.delete(stockItems).where(eq(stockItems.id, id)).returning({ images: stockItems.images });
+  return rows[0]?.images ?? [];
 }
 
 export function isUniqueViolation(err: unknown): boolean {
