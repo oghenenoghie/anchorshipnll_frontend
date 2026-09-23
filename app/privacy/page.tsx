@@ -93,10 +93,6 @@ export default function PrivacyPage() {
                   <span className="font-medium text-hull">Neon</span> — hosts our database
                   (Postgres) and, where used, authentication.
                 </li>
-                <li>
-                  <span className="font-medium text-hull">Cloudinary</span> — hosts and serves
-                  listing photography; it does not receive your form submissions.
-                </li>
               </ul>
               <p>We don&apos;t share your information with anyone beyond these processors.</p>
             </>

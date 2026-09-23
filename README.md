@@ -13,14 +13,13 @@ for the existing Django site this frontend is being built alongside.
 - **Framer Motion** for restrained, reduced-motion-aware animation
 - **Drizzle ORM** over **Neon Postgres** — no Supabase; Neon is the single backend for data and object storage
 - **Admin auth**: a single-admin credential (env-configured, scrypt-hashed) behind a signed session cookie — see [Admin](#admin) below
-- **Cloudinary** as the image/DAM layer for condition photography
 - Deploys to **Railway** as a Nixpacks service; `next start -p $PORT`
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in Neon / Cloudinary / admin values
+cp .env.example .env.local   # fill in Neon / admin values
 npm run admin:hash-password -- "your-password"   # paste output into ADMIN_PASSWORD_HASH
 npm run dev
 ```

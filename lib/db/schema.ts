@@ -67,7 +67,6 @@ export const stockItems = pgTable(
     description: text("description").notNull().default(""),
     specs: jsonb("specs").$type<SpecRow[]>().notNull().default([]),
     priceOnApplication: numeric("price_on_application", { precision: 12, scale: 2 }),
-    cloudinaryPublicId: text("cloudinary_public_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

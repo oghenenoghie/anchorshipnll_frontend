@@ -1,0 +1,1 @@
+ALTER TABLE "stock_items" DROP COLUMN "cloudinary_public_id";
