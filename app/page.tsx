@@ -2,6 +2,8 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { StockCard } from "@/components/stock-card";
 import { SpecTable } from "@/components/spec-table";
+import { FadeIn } from "@/components/motion/fade-in";
+import { HeroDrawing } from "@/components/motion/hero-drawing";
 import { listingHref } from "@/lib/data/stock";
 import { getListingBySku, type StockListing } from "@/lib/db/queries";
 
@@ -23,32 +25,35 @@ export default async function Home() {
   return (
     <>
       <section className="hero-fill blueprint-grid relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
-          <p className="font-body text-label font-medium uppercase text-blueprint">
-            Marine diesel engines &amp; spare parts
-          </p>
-          <h1 className="mt-4 max-w-3xl font-display text-display-xl font-extrabold text-paper">
-            Find the exact part, precisely catalogued.
-          </h1>
-          <p className="mt-6 max-w-xl font-body text-lg leading-relaxed text-fog">
-            AnchorShip NL is a B2B marketplace for complete marine diesel engines and spare
-            parts — Wärtsilä, MAN, MaK, Deutz, Caterpillar. Search by OEM part number, browse
-            by exploded drawing, or request a quote directly.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/parts" className={buttonVariants({ variant: "primary" })}>
-              Browse parts
-            </Link>
-            <Link href="/sell-to-us" className={buttonVariants({ variant: "onDark" })}>
-              Sell to us
-            </Link>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 py-24 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-32">
+          <div>
+            <p className="font-body text-label font-medium uppercase text-blueprint">
+              Marine diesel engines &amp; spare parts
+            </p>
+            <h1 className="mt-4 max-w-3xl font-display text-display-xl font-extrabold text-paper">
+              Find the exact part, precisely catalogued.
+            </h1>
+            <p className="mt-6 max-w-xl font-body text-lg leading-relaxed text-fog">
+              AnchorShip NL is a B2B marketplace for complete marine diesel engines and spare
+              parts — Wärtsilä, MAN, MaK, Deutz, Caterpillar. Search by OEM part number, browse
+              by exploded drawing, or request a quote directly.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link href="/parts" className={buttonVariants({ variant: "primary" })}>
+                Browse parts
+              </Link>
+              <Link href="/sell-to-us" className={buttonVariants({ variant: "onDark" })}>
+                Sell to us
+              </Link>
+            </div>
           </div>
+          <HeroDrawing />
         </div>
       </section>
 
       {stock.length > 0 && (
         <section className="border-b border-border bg-surface-0 py-16 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <FadeIn className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between">
               <div>
                 <p className="font-body text-label font-medium uppercase text-fog">
@@ -79,13 +84,13 @@ export default async function Home() {
                 />
               ))}
             </div>
-          </div>
+          </FadeIn>
         </section>
       )}
 
       {featuredEngine && (
         <section className="bg-hull py-16 sm:py-24">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+          <FadeIn className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
             <div>
               <p className="font-body text-label font-medium uppercase text-blueprint">
                 Specification
@@ -107,7 +112,7 @@ export default async function Home() {
             <div className="rounded-md border border-white/10 bg-white/5 p-6">
               <SpecTable rows={featuredEngine.specs} variant="dark" />
             </div>
-          </div>
+          </FadeIn>
         </section>
       )}
     </>
