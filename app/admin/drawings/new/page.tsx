@@ -18,8 +18,7 @@ export default function NewDrawingPage({ searchParams }: { searchParams: SearchP
       <p className="font-body text-label font-medium uppercase text-blueprint">Discovery</p>
       <h1 className="mt-2 font-display text-display-lg font-bold text-hull">New diagram</h1>
       <p className="mt-3 max-w-xl font-body text-steel">
-        Save the diagram&apos;s details first — you&apos;ll place callouts on the next screen once the
-        image is showing.
+        Upload the drawing, then click it to place callouts and link each one to a listing.
       </p>
 
       <div className="mt-8">

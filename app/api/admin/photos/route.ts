@@ -2,9 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/session";
 import {
+  DRAWING_TYPES,
   MAX_PHOTO_BYTES,
   PHOTO_TYPES,
   isStorageConfigured,
+  isUnsafeSvg,
+  newDrawingKey,
   newPhotoKey,
   publicUrl,
   putPhoto,
@@ -25,8 +28,9 @@ function error(code: string, status: number) {
   return NextResponse.json({ error: code }, { status });
 }
 
-// Uploads one listing photo to object storage and returns its key. The photo
-// is only attached to a listing when the stock form is saved. middleware.ts
+// Uploads one listing photo (or, with kind=drawing, one exploded-drawing
+// image) to object storage and returns its key and public URL. It's only
+// attached to a listing or drawing when that form is saved. middleware.ts
 // only covers /admin/*, so this route checks the session itself.
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
@@ -40,20 +44,29 @@ export async function POST(request: NextRequest) {
   if (!isStorageConfigured()) return error("not_configured", 503);
 
   let file: FormDataEntryValue | null;
+  let isDrawing: boolean;
   try {
-    file = (await request.formData()).get("file");
+    const form = await request.formData();
+    file = form.get("file");
+    isDrawing = form.get("kind") === "drawing";
   } catch {
     return error("bad_request", 400);
   }
   // Not `instanceof File`: the global File class only exists from Node 20,
   // and Railway runs Node 18. FormDataEntryValue is File | string.
   if (!file || typeof file === "string") return error("bad_request", 400);
-  if (!PHOTO_TYPES[file.type]) return error("unsupported_type", 415);
+  const types = isDrawing ? DRAWING_TYPES : PHOTO_TYPES;
+  if (!types[file.type]) return error("unsupported_type", 415);
   if (file.size === 0 || file.size > MAX_PHOTO_BYTES) return error("too_large", 413);
 
-  const key = newPhotoKey(file.type);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (file.type === "image/svg+xml" && isUnsafeSvg(new TextDecoder().decode(bytes))) {
+    return error("unsafe_svg", 415);
+  }
+
+  const key = isDrawing ? newDrawingKey(file.type) : newPhotoKey(file.type);
   try {
-    await putPhoto(key, new Uint8Array(await file.arrayBuffer()), file.type);
+    await putPhoto(key, bytes, file.type);
   } catch (err) {
     console.error("Photo upload failed", err);
     return error("upload_failed", 502);

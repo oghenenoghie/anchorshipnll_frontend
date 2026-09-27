@@ -18,6 +18,38 @@ export const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 
 export const PHOTO_KEY_RE = /^stock\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|avif)$/;
 
+// Exploded drawings are line art: PNG, WebP or SVG, never JPEG (it smears
+// fine lines). They share the public bucket under drawings/. SVG is allowed
+// here because only admins upload drawings, and each SVG is screened by
+// isUnsafeSvg before it's stored.
+export const DRAWING_TYPES: Record<string, string> = {
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+};
+
+export const DRAWING_KEY_RE = /^drawings\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|webp|svg)$/;
+
+// Rejects SVGs that could run script if opened directly from the bucket URL:
+// script elements (namespaced too), embedded HTML/objects, event-handler
+// attributes, javascript: URLs and entity declarations.
+export function isUnsafeSvg(text: string): boolean {
+  return /<([\w-]+:)?(script|foreignObject|iframe|embed|object)\b|<!ENTITY|\son[a-z]+\s*=|javascript:/i.test(text);
+}
+
+export function newDrawingKey(contentType: string): string {
+  return `drawings/${crypto.randomUUID()}.${DRAWING_TYPES[contentType]}`;
+}
+
+// The storage key behind a drawing image URL, or null when the URL isn't a
+// drawing uploaded to this bucket (e.g. a bundled /drawings/*.svg path).
+export function drawingKeyFromUrl(url: string): string | null {
+  const prefix = publicUrl("");
+  if (!prefix || !url.startsWith(prefix)) return null;
+  const key = url.slice(prefix.length);
+  return DRAWING_KEY_RE.test(key) ? key : null;
+}
+
 // Photos sent with a sell-to-us enquiry go to a separate private bucket: they
 // come from the public and are only for the team, so admins view them through
 // an admin-gated route instead of a public URL.
