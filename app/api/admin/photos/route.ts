@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return error("bad_request", 400);
   }
-  if (!(file instanceof File)) return error("bad_request", 400);
+  // Not `instanceof File`: the global File class only exists from Node 20,
+  // and Railway runs Node 18. FormDataEntryValue is File | string.
+  if (!file || typeof file === "string") return error("bad_request", 400);
   if (!PHOTO_TYPES[file.type]) return error("unsupported_type", 415);
   if (file.size === 0 || file.size > MAX_PHOTO_BYTES) return error("too_large", 413);
 
