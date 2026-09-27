@@ -17,7 +17,11 @@ export function getDb(): Db {
     throw new Error("DATABASE_URL is not set — see .env.example");
   }
 
-  const sql = neon(process.env.DATABASE_URL);
+  // The driver sends each query as a fetch() request, and Next.js 14 keeps
+  // fetch responses in its data cache even on force-dynamic pages — so without
+  // no-store a page kept showing old rows until that exact path was
+  // revalidated. Queries must always read the live database.
+  const sql = neon(process.env.DATABASE_URL, { fetchOptions: { cache: "no-store" } });
   cached = drizzle(sql, { schema });
   return cached;
 }
