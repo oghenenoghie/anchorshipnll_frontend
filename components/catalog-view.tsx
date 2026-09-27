@@ -26,7 +26,7 @@ export async function CatalogView({
     statuses: paramValues(searchParams, "condition"),
   };
 
-  const [results, counts] = await Promise.all([
+  const [{ listings: results, fuzzy }, counts] = await Promise.all([
     getListings(category, filters),
     getFacetCounts(category),
   ]);
@@ -52,7 +52,8 @@ export async function CatalogView({
           <div className="lg:col-span-3">
             <div className="flex items-baseline justify-between border-b border-border pb-4">
               <p className="font-mono text-data data-num text-fog">
-                {results.length} {results.length === 1 ? "result" : "results"}
+                {results.length} {fuzzy && "close "}
+                {results.length === 1 ? "match" : "matches"}
                 {q && <> for &ldquo;{q}&rdquo;</>}
               </p>
               {hasActiveFilters && (
@@ -61,6 +62,17 @@ export async function CatalogView({
                 </a>
               )}
             </div>
+
+            {fuzzy && (
+              <p className="mt-4 rounded-md border border-border bg-surface-1 px-4 py-3 font-body text-sm text-steel">
+                No exact match for <span className="font-mono text-hull">&ldquo;{q}&rdquo;</span>. These are the
+                closest part numbers and descriptions; check the number, or{" "}
+                <a href={`/rfq?sku=${encodeURIComponent(q ?? "")}`} className="font-medium text-blueprint hover:underline">
+                  send us an enquiry
+                </a>{" "}
+                and we&apos;ll source it.
+              </p>
+            )}
 
             {results.length === 0 ? (
               <div className="mt-10 rounded-md border border-dashed border-border-strong p-12 text-center">
