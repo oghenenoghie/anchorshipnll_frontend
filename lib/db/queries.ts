@@ -71,10 +71,22 @@ function slugsToBrandNames(slugs: string[]): string[] {
   return slugs.map((slug) => bySlug.get(slug)).filter((name): name is string => Boolean(name));
 }
 
+// A trigram word-similarity score of at least this counts as a close match.
+// Tuned on the live catalog: the intended part scored 0.63-1.0 for typos like
+// "DR-2213", "bf6m1051" or "turbocharer", unrelated parts 0.38 or less, and
+// neighbours such as "Cylinder liner" for "cylindr head" 0.50.
+const FUZZY_THRESHOLD = 0.55;
+
+export interface ListingSearchResult {
+  listings: StockListing[];
+  // True when nothing matched the query exactly and these are close matches.
+  fuzzy: boolean;
+}
+
 export async function getListings(
   category: StockCategory,
   filters: StockFilters,
-): Promise<StockListing[]> {
+): Promise<ListingSearchResult> {
   const db = getDb();
   const conditions: SQL[] = [eq(stockItems.category, category)];
 
@@ -87,25 +99,40 @@ export async function getListings(
     conditions.push(inArray(stockItems.status, filters.statuses as StockStatusValue[]));
   }
 
-  const q = filters.q?.trim();
-  if (q) {
-    const pattern = `%${q}%`;
-    const match = or(
-      ilike(stockItems.sku, pattern),
-      ilike(stockItems.title, pattern),
-      ilike(stockItems.subtitle, pattern),
-      sql`EXISTS (SELECT 1 FROM unnest(${stockItems.oemNumbers}) AS oem WHERE oem ILIKE ${pattern})`,
-    );
-    if (match) conditions.push(match);
+  const q = filters.q?.trim().slice(0, 100);
+  if (!q) {
+    const rows = await db.select().from(stockItems).where(and(...conditions)).orderBy(stockItems.title);
+    return { listings: rows.map(toListing), fuzzy: false };
   }
 
-  const rows = await db
+  // Normalised the same way as stock_items.search_key (see migration 0005):
+  // lowercase and accent-free, plus a punctuation-free form so "DR2231",
+  // "dr-2231" and "DR 2231" all find the same part.
+  const normalized = sql`lower(unaccent(${q}))`;
+  const compact = sql`regexp_replace(lower(unaccent(${q})), '[^a-z0-9]', '', 'g')`;
+
+  // position() rather than LIKE so user input needs no wildcard escaping. The
+  // catalog is small enough that these scans are cheap; the trigram index on
+  // search_key is there for when it grows and the operator forms are adopted.
+  const exact = or(
+    sql`position(${normalized} in ${stockItems.searchKey}) > 0`,
+    sql`(length(${compact}) >= 3 AND position(${compact} in ${stockItems.searchKey}) > 0)`,
+  )!;
+  const exactRows = await db
     .select()
     .from(stockItems)
-    .where(and(...conditions))
+    .where(and(...conditions, exact))
     .orderBy(stockItems.title);
+  if (exactRows.length > 0) return { listings: exactRows.map(toListing), fuzzy: false };
 
-  return rows.map(toListing);
+  const score = sql`greatest(word_similarity(${normalized}, ${stockItems.searchKey}), word_similarity(${compact}, ${stockItems.searchKey}))`;
+  const fuzzyRows = await db
+    .select()
+    .from(stockItems)
+    .where(and(...conditions, sql`${score} >= ${FUZZY_THRESHOLD}`))
+    .orderBy(desc(score), stockItems.title)
+    .limit(24);
+  return { listings: fuzzyRows.map(toListing), fuzzy: fuzzyRows.length > 0 };
 }
 
 export interface FacetCounts {

@@ -99,9 +99,20 @@ time.
 - Schema lives in `lib/db/schema.ts` (`stock_items`, plus `stock_status` and
   `stock_category` enums); run `npm run db:generate` then `npm run db:migrate`
   to apply changes, then `npm run db:seed` to backfill sample data.
-- Part-number search runs `ILIKE` over `sku`/`title`/`subtitle` plus an
-  `EXISTS (... unnest(oem_numbers) ...)` check, backed by a GIN index on
-  `oem_numbers`. `pg_trgm` (fuzzy/typo-tolerant matching) isn't wired in yet.
+- Part-number search (`getListings` in `lib/db/queries.ts`) runs against
+  `stock_items.search_key`: the sku, title, subtitle, brand and OEM numbers,
+  lowercased and accent-free (`unaccent`), plus punctuation-free copies of the
+  part numbers. A database trigger keeps it current on every insert and update
+  (migration `0005`), so the app never writes it.
+  - **Exact first:** a substring match on the normalised query, or on its
+    punctuation-free form, so `DR2231`, `dr-2231` and `DR 2231` all find
+    `DR-2231`, and `wartsila` finds `Wärtsilä`.
+  - **Close matches only when nothing matches exactly:** `pg_trgm`
+    `word_similarity` of at least 0.55 (see `FUZZY_THRESHOLD`), ranked by score.
+    The catalog shows a "No exact match … closest part numbers" notice with an
+    enquiry link.
+  - The 0.55 threshold was tuned on the live catalog; revisit it if close
+    matches get noisy as the catalog grows.
 - Row-Level Security is not yet implemented — the app connects with a single
   owner role with full read/write access to `stock_items`. There is no direct
   client-to-Postgres path (no Data API, no browser-side Postgres client), so

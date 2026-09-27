@@ -10,6 +10,7 @@ import {
   index,
   boolean,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const stockStatusEnum = pgEnum("stock_status", [
   "available",
@@ -74,11 +75,18 @@ export const stockItems = pgTable(
     description: text("description").notNull().default(""),
     specs: jsonb("specs").$type<SpecRow[]>().notNull().default([]),
     images: jsonb("images").$type<StockImage[]>().notNull().default([]),
+    // Lowercased, accent-free text of the sku, title, subtitle, brand and OEM
+    // numbers, plus punctuation-free copies of the part numbers ("dr2231").
+    // Maintained by a database trigger (migration 0005); never written by the app.
+    searchKey: text("search_key").notNull().default(""),
     priceOnApplication: numeric("price_on_application", { precision: 12, scale: 2 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("stock_items_oem_numbers_gin_idx").using("gin", table.oemNumbers)],
+  (table) => [
+    index("stock_items_oem_numbers_gin_idx").using("gin", table.oemNumbers),
+    index("stock_items_search_key_trgm_idx").using("gin", sql`${table.searchKey} gin_trgm_ops`),
+  ],
 );
 
 export const enquiryKindEnum = pgEnum("enquiry_kind", ["rfq", "contact", "sell_to_us"]);
