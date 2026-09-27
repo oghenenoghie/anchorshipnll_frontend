@@ -112,7 +112,7 @@ time.
 ## Listing photos
 
 Photos live in Neon Object Storage, in the `public_read` bucket named by
-`STORAGE_BUCKET` (default `stock-photos`) on the same branch as the database.
+`NEON_STORAGE_BUCKET` (default `stock-photos`) on the same branch as the database.
 The database only stores each photo's key and description, in
 `stock_items.images` (first photo = primary).
 
@@ -123,7 +123,7 @@ The database only stores each photo's key and description, in
 - **Delete:** removing a photo from a listing, or deleting the listing, deletes
   the file from the bucket after the save succeeds (best effort). Photos
   uploaded to a form that is never saved are left in the bucket.
-- **Display:** pages build the public URL from `AWS_ENDPOINT_URL_S3` and serve
+- **Display:** pages build the public URL from `NEON_STORAGE_ENDPOINT` and serve
   it through `next/image`, which resizes and converts to AVIF/WebP. Without
   storage env vars, listings fall back to a placeholder and uploads return 503.
 - **Branches:** storage branches with the database, so a preview branch sees
