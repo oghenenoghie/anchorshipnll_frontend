@@ -61,6 +61,9 @@ export const drawings = pgTable("drawings", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   brand: text("brand").notNull(),
+  // Engine model family the drawing belongs to (e.g. "W32"); links it to the
+  // /brands/[brand]/[model] hub. Optional.
+  model: text("model"),
   imageUrl: text("image_url").notNull(),
   hotspots: jsonb("hotspots").$type<Hotspot[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -75,6 +78,9 @@ export const stockItems = pgTable(
     title: text("title").notNull(),
     subtitle: text("subtitle"),
     brand: text("brand").notNull(),
+    // Engine model family (e.g. "W32", "3512C") for the /brands/[brand]/[model]
+    // hub. Optional — generic parts may fit several models.
+    model: text("model"),
     category: stockCategoryEnum("category").notNull(),
     // OEM part numbers this listing matches, searched via the GIN index below.
     oemNumbers: text("oem_numbers").array().notNull().default([]),

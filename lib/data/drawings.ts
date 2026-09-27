@@ -4,6 +4,7 @@ export interface SeedDrawing {
   slug: string;
   title: string;
   brand: string;
+  model: string | null;
   imageUrl: string;
   hotspots: Hotspot[];
 }
@@ -18,6 +19,7 @@ export const SEED_DRAWINGS: SeedDrawing[] = [
     slug: "wartsila-w32-cylinder-head",
     title: "Wärtsilä W32 — Cylinder head, exploded view",
     brand: "Wärtsilä",
+    model: "W32",
     imageUrl: "/drawings/wartsila-w32-cylinder-head.svg",
     hotspots: [
       { id: "01", x: 0.75, y: 0.1556, label: "Rocker cover", sku: null },
@@ -30,6 +32,7 @@ export const SEED_DRAWINGS: SeedDrawing[] = [
     slug: "mak-m32c-piston",
     title: "MaK M32C — Piston assembly, exploded view",
     brand: "MaK",
+    model: "M32C",
     imageUrl: "/drawings/mak-m32c-piston.svg",
     hotspots: [
       { id: "01", x: 0.75, y: 0.1444, label: "Piston crown", sku: null },

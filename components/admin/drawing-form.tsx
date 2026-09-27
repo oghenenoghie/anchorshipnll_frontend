@@ -83,6 +83,18 @@ export function DrawingForm({
             ))}
           </select>
         </Field>
+
+        <Field label="Engine model" htmlFor="model">
+          <input
+            id="model"
+            name="model"
+            type="text"
+            maxLength={60}
+            placeholder="e.g. W32, M32C, 3512C"
+            defaultValue={defaults?.model ?? ""}
+            className={cn(inputClass(), "font-mono")}
+          />
+        </Field>
       </div>
 
       <DrawingImageEditor

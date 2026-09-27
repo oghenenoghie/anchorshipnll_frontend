@@ -5,7 +5,7 @@ import { SpecTable } from "@/components/spec-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { StockCard } from "@/components/stock-card";
-import { listingHref } from "@/lib/data/stock";
+import { brandSlug, listingHref, modelHref } from "@/lib/data/stock";
 import { getDrawingsForSku, getRelatedListings, type StockListing } from "@/lib/db/queries";
 
 export async function ListingDetail({
@@ -47,7 +47,17 @@ export async function ListingDetail({
 
           <div>
             <p className="font-body text-label font-medium uppercase text-blueprint">
-              {listing.brand}
+              <Link href={`/brands/${brandSlug(listing.brand)}`} className="hover:underline">
+                {listing.brand}
+              </Link>
+              {listing.model && (
+                <>
+                  {" · "}
+                  <Link href={modelHref(listing.brand, listing.model)} className="font-mono normal-case hover:underline">
+                    {listing.model}
+                  </Link>
+                </>
+              )}
             </p>
             <h1 className="mt-2 font-display text-display-lg font-bold text-hull">
               {listing.title}
