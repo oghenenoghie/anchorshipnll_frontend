@@ -4,6 +4,7 @@ const NAV_LINKS = [
   { href: "/parts", label: "Parts" },
   { href: "/engines", label: "Engines" },
   { href: "/drawings", label: "Drawings" },
+  { href: "/stock", label: "Stock" },
   { href: "/sell-to-us", label: "Sell to us" },
   { href: "/about", label: "About" },
 ];

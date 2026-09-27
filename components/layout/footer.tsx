@@ -6,6 +6,7 @@ const COLUMNS = [
     links: [
       { href: "/parts", label: "Spare parts" },
       { href: "/engines", label: "Complete engines" },
+      { href: "/stock", label: "New & expected stock" },
       { href: "/parts?brand=wartsila", label: "Wärtsilä" },
       { href: "/parts?brand=man", label: "MAN" },
     ],
@@ -22,6 +23,7 @@ const COLUMNS = [
     heading: "Company",
     links: [
       { href: "/about", label: "About" },
+      { href: "/faq", label: "FAQ" },
       { href: "/terms", label: "Terms" },
       { href: "/privacy", label: "Privacy" },
     ],

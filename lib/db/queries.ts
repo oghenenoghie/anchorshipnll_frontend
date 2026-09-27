@@ -491,3 +491,28 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
     ...diagrams.map((row) => ({ path: `/drawings/${encodeURIComponent(row.slug)}`, updatedAt: row.updatedAt })),
   ];
 }
+
+export interface StockOverview {
+  newArrivals: StockListing[];
+  expected: StockListing[];
+  recentlySold: StockListing[];
+}
+
+// The /stock page: what's just come in, what's on its way, and what recently
+// sold (sold listings stay live as a trust signal).
+export async function getStockOverview(limit = 6): Promise<StockOverview> {
+  const db = getDb();
+  const byStatus = (status: StockStatusValue, order: SQL) =>
+    db.select().from(stockItems).where(eq(stockItems.status, status)).orderBy(order).limit(limit);
+
+  const [newArrivals, expected, recentlySold] = await Promise.all([
+    byStatus("available", desc(stockItems.createdAt)),
+    byStatus("expected", desc(stockItems.createdAt)),
+    byStatus("sold", desc(stockItems.updatedAt)),
+  ]);
+  return {
+    newArrivals: newArrivals.map(toListing),
+    expected: expected.map(toListing),
+    recentlySold: recentlySold.map(toListing),
+  };
+}
