@@ -153,6 +153,16 @@ notification actually went out.
 (`new` / `handled`). Each one opens to the full message, with a reply-by-email
 link, mark handled / reopen, and delete.
 
+**Sell-to-us photos:** sellers can attach up to 6 photos (JPEG/PNG/WebP/AVIF,
+10 MB each), sent with the form. The server action writes them to the
+**private** bucket named by `NEON_STORAGE_ENQUIRY_BUCKET` (default
+`enquiry-uploads`) under `enquiries/<uuid>.<ext>` and stores the keys in
+`enquiries.photos`. A failed upload never loses the enquiry; the notification
+email says how many photos arrived or failed. Admins see them on the enquiry
+page, served through the session-checked `GET /api/admin/enquiry-photos/<key>`;
+deleting the enquiry deletes its photos. `next.config.mjs` raises the server
+action body limit to 64 MB for these uploads.
+
 ## Admin
 
 `/admin` is a CRUD UI over `stock_items` (plus `drawings`, and the `enquiries` inbox above) — create, edit, and delete listings

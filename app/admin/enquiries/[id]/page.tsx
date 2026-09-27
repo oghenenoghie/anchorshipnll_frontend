@@ -93,6 +93,31 @@ export default async function AdminEnquiryPage({
         </p>
       </div>
 
+      {enquiry.photos.length > 0 && (
+        <div className="mt-6">
+          <p className="font-body text-label uppercase text-fog">Photos ({enquiry.photos.length})</p>
+          <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {enquiry.photos.map((photo) => {
+              const src = `/api/admin/enquiry-photos/${photo.key}`;
+              return (
+                <li key={photo.key}>
+                  <a href={src} target="_blank" rel="noopener noreferrer" className="block">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- admin-only route; the image optimizer can't send the session cookie */}
+                    <img
+                      src={src}
+                      alt={photo.name}
+                      loading="lazy"
+                      className="aspect-[4/3] w-full rounded-md border border-border bg-surface-1 object-cover"
+                    />
+                  </a>
+                  <p className="mt-1 truncate font-mono text-xs text-fog">{photo.name}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <a
           href={`mailto:${enquiry.email}?subject=${encodeURIComponent(replySubject)}`}

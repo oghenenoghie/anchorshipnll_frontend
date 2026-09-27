@@ -18,12 +18,20 @@ export const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 
 export const PHOTO_KEY_RE = /^stock\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|avif)$/;
 
+// Photos sent with a sell-to-us enquiry go to a separate private bucket: they
+// come from the public and are only for the team, so admins view them through
+// an admin-gated route instead of a public URL.
+export const MAX_ENQUIRY_PHOTOS = 6;
+export const MAX_ENQUIRY_PHOTO_BYTES = 10 * 1024 * 1024;
+
+export const ENQUIRY_PHOTO_KEY_RE =
+  /^enquiries\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|avif)$/;
+
 interface StorageConfig {
   endpoint: string;
   region: string;
   keyId: string;
   secret: string;
-  bucket: string;
 }
 
 function readConfig(): StorageConfig | null {
@@ -32,11 +40,15 @@ function readConfig(): StorageConfig | null {
   const keyId = process.env.NEON_STORAGE_KEY_ID;
   const secret = process.env.NEON_STORAGE_SECRET;
   if (!endpoint || !region || !keyId || !secret) return null;
-  return { endpoint, region, keyId, secret, bucket: bucketName() };
+  return { endpoint, region, keyId, secret };
 }
 
 function bucketName(): string {
   return process.env.NEON_STORAGE_BUCKET || "stock-photos";
+}
+
+function enquiryBucketName(): string {
+  return process.env.NEON_STORAGE_ENQUIRY_BUCKET || "enquiry-uploads";
 }
 
 export function isStorageConfigured(): boolean {
@@ -52,6 +64,10 @@ export function publicUrl(key: string): string | null {
 
 export function newPhotoKey(contentType: string): string {
   return `stock/${crypto.randomUUID()}.${PHOTO_TYPES[contentType]}`;
+}
+
+export function newEnquiryPhotoKey(contentType: string): string {
+  return `enquiries/${crypto.randomUUID()}.${PHOTO_TYPES[contentType]}`;
 }
 
 // --- Request signing ------------------------------------------------------
@@ -119,6 +135,7 @@ export function signRequest(
 }
 
 async function storageRequest(
+  bucket: string,
   method: string,
   key: string,
   headers: Record<string, string> = {},
@@ -127,7 +144,7 @@ async function storageRequest(
 ) {
   const config = readConfig();
   if (!config) throw new Error("Neon storage is not configured — see .env.example");
-  const url = new URL(`${config.endpoint}/${config.bucket}/${key}`);
+  const url = new URL(`${config.endpoint}/${bucket}/${key}`);
   const response = await fetch(url, {
     method,
     headers: { ...unsignedHeaders, ...signRequest(config, method, url, headers, body) },
@@ -136,10 +153,12 @@ async function storageRequest(
   if (!response.ok) {
     throw new Error(`Neon storage ${method} ${key} failed: ${response.status} ${await response.text()}`);
   }
+  return response;
 }
 
 export async function putPhoto(key: string, body: Uint8Array, contentType: string): Promise<void> {
   await storageRequest(
+    bucketName(),
     "PUT",
     key,
     { "content-type": contentType },
@@ -155,8 +174,28 @@ export async function putPhoto(key: string, body: Uint8Array, contentType: strin
 // must never block saving or deleting the listing itself.
 export async function deletePhotos(keys: string[]): Promise<void> {
   if (keys.length === 0 || !isStorageConfigured()) return;
-  const results = await Promise.allSettled(keys.map((key) => storageRequest("DELETE", key)));
+  const results = await Promise.allSettled(keys.map((key) => storageRequest(bucketName(), "DELETE", key)));
   results.forEach((result, i) => {
     if (result.status === "rejected") console.error(`Deleting listing photo ${keys[i]} failed`, result.reason);
+  });
+}
+
+export async function putEnquiryPhoto(key: string, body: Uint8Array, contentType: string): Promise<void> {
+  await storageRequest(enquiryBucketName(), "PUT", key, { "content-type": contentType }, body);
+}
+
+// The caller streams the body back to an admin; the bucket itself is private.
+export async function getEnquiryPhoto(key: string): Promise<Response> {
+  return storageRequest(enquiryBucketName(), "GET", key);
+}
+
+// Best effort, like deletePhotos: never blocks deleting the enquiry.
+export async function deleteEnquiryPhotos(keys: string[]): Promise<void> {
+  if (keys.length === 0 || !isStorageConfigured()) return;
+  const results = await Promise.allSettled(
+    keys.map((key) => storageRequest(enquiryBucketName(), "DELETE", key)),
+  );
+  results.forEach((result, i) => {
+    if (result.status === "rejected") console.error(`Deleting enquiry photo ${keys[i]} failed`, result.reason);
   });
 }

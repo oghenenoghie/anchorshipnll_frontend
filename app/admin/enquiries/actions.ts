@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/admin";
-import { deleteEnquiry, setEnquiryStatus } from "@/lib/db/queries";
+import { deleteEnquiry, getEnquiryByIdAdmin, setEnquiryStatus } from "@/lib/db/queries";
+import { deleteEnquiryPhotos } from "@/lib/storage";
 import type { EnquiryStatusValue } from "@/lib/db/schema";
 
 export async function setEnquiryStatusAction(id: string, status: EnquiryStatusValue): Promise<void> {
@@ -17,7 +18,9 @@ export async function setEnquiryStatusAction(id: string, status: EnquiryStatusVa
 
 export async function deleteEnquiryAction(id: string): Promise<void> {
   await requireAdmin();
+  const enquiry = await getEnquiryByIdAdmin(id);
   await deleteEnquiry(id);
+  await deleteEnquiryPhotos(enquiry?.photos.map((photo) => photo.key) ?? []);
 
   revalidatePath("/admin/enquiries");
   redirect("/admin/enquiries?deleted=1");
