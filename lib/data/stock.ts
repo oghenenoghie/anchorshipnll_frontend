@@ -37,6 +37,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Wärtsilä W32",
     subtitle: "Cylinder head, complete",
     brand: "Wärtsilä",
+    model: "W32",
     category: "part",
     status: "available",
     quantity: 4,
@@ -55,6 +56,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "MAN B&W 6S50MC",
     subtitle: "Fuel injection pump",
     brand: "MAN",
+    model: "S50MC",
     category: "part",
     status: "available",
     quantity: 1,
@@ -73,6 +75,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Caterpillar 3512C",
     subtitle: "Turbocharger assembly",
     brand: "Caterpillar",
+    model: "3512C",
     category: "part",
     status: "expected",
     quantity: 2,
@@ -91,6 +94,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "MaK M32C",
     subtitle: "Piston with connecting rod",
     brand: "MaK",
+    model: "M32C",
     category: "part",
     status: "available",
     quantity: 6,
@@ -108,6 +112,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Deutz TBD620",
     subtitle: "Cylinder liner, honed",
     brand: "Deutz",
+    model: "TBD620",
     category: "part",
     status: "reserved",
     quantity: 1,
@@ -125,6 +130,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Wärtsilä 6L20",
     subtitle: "Camshaft, reconditioned",
     brand: "Wärtsilä",
+    model: "L20",
     category: "part",
     status: "sold",
     quantity: 0,
@@ -142,6 +148,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "MAN L23/30H",
     subtitle: "Cylinder head gasket set",
     brand: "MAN",
+    model: "L23/30H",
     category: "part",
     status: "available",
     quantity: 8,
@@ -159,6 +166,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Caterpillar C32",
     subtitle: "Fuel injector, remanufactured",
     brand: "Caterpillar",
+    model: "C32",
     category: "part",
     status: "available",
     quantity: 5,
@@ -176,6 +184,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "MaK 6M25",
     subtitle: "Exhaust valve, complete",
     brand: "MaK",
+    model: "M25",
     category: "part",
     status: "expected",
     quantity: 3,
@@ -193,6 +202,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Deutz BF6M1015",
     subtitle: "Water pump assembly",
     brand: "Deutz",
+    model: "BF6M1015",
     category: "part",
     status: "available",
     quantity: 2,
@@ -210,6 +220,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Wärtsilä W32 Generator Set",
     subtitle: "9-cylinder, 1,920 kW, 750 RPM",
     brand: "Wärtsilä",
+    model: "W32",
     category: "engine",
     status: "available",
     quantity: 1,
@@ -230,6 +241,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "MaK 8M32C",
     subtitle: "8-cylinder in-line, 4,000 kW",
     brand: "MaK",
+    model: "M32C",
     category: "engine",
     status: "expected",
     quantity: 1,
@@ -249,6 +261,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Deutz TBD620 V16",
     subtitle: "16-cylinder V, 5,200 kW",
     brand: "Deutz",
+    model: "TBD620",
     category: "engine",
     status: "reserved",
     quantity: 1,
@@ -268,6 +281,7 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     title: "Caterpillar 3516C HD",
     subtitle: "16-cylinder V, 2,500 kW",
     brand: "Caterpillar",
+    model: "3516C",
     category: "engine",
     status: "available",
     quantity: 2,
@@ -283,3 +297,21 @@ export const SEED_LISTINGS: Omit<StockListing, "images">[] = [
     ],
   },
 ];
+
+export function findBrand(slug: string): Brand | undefined {
+  return BRANDS.find((b) => b.slug === slug.toLowerCase());
+}
+
+// URL segment for an engine model: "L23/30H" → "l23-30h", "3512C" → "3512c".
+export function modelSlug(model: string): string {
+  return model
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function modelHref(brand: string, model: string): string {
+  return `/brands/${brandSlug(brand)}/${modelSlug(model)}`;
+}

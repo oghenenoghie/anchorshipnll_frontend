@@ -52,6 +52,7 @@ function readInput(formData: FormData): { input: DrawingInput; missing: string[]
   const slug = String(formData.get("slug") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const brand = String(formData.get("brand") ?? "").trim();
+  const model = String(formData.get("model") ?? "").trim().slice(0, 60) || null;
   const imageUrl = String(formData.get("imageUrl") ?? "").trim();
   const hotspots = parseHotspots(String(formData.get("hotspots") ?? "[]"));
 
@@ -61,7 +62,7 @@ function readInput(formData: FormData): { input: DrawingInput; missing: string[]
   if (!BRANDS.some((b) => b.name === brand)) missing.push("brand");
   if (!imageUrl) missing.push("imageUrl");
 
-  return { input: { slug, title, brand, imageUrl, hotspots }, missing };
+  return { input: { slug, title, brand, model, imageUrl, hotspots }, missing };
 }
 
 export async function createDrawingAction(formData: FormData): Promise<void> {

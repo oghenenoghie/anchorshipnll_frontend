@@ -24,6 +24,7 @@ export interface StockListing {
   title: string;
   subtitle: string;
   brand: string;
+  model: string | null;
   category: StockCategory;
   status: StockStatusValue;
   quantity: number;
@@ -52,6 +53,7 @@ function toListing(row: typeof stockItems.$inferSelect): StockListing {
     title: row.title,
     subtitle: row.subtitle ?? "",
     brand: row.brand,
+    model: row.model,
     category: row.category,
     status: row.status,
     quantity: row.quantity,
@@ -250,6 +252,7 @@ export interface StockItemInput {
   title: string;
   subtitle: string;
   brand: string;
+  model: string | null;
   category: StockCategoryValue;
   status: StockStatusValue;
   quantity: number;
@@ -306,6 +309,7 @@ export interface DrawingSummary {
   slug: string;
   title: string;
   brand: string;
+  model: string | null;
   imageUrl: string;
 }
 
@@ -318,7 +322,7 @@ export interface DrawingDetail extends DrawingSummary {
 }
 
 function toDrawingSummary(row: typeof drawings.$inferSelect): DrawingSummary {
-  return { id: row.id, slug: row.slug, title: row.title, brand: row.brand, imageUrl: row.imageUrl };
+  return { id: row.id, slug: row.slug, title: row.title, brand: row.brand, model: row.model, imageUrl: row.imageUrl };
 }
 
 async function resolveHotspots(hotspots: Hotspot[]): Promise<ResolvedHotspot[]> {
@@ -368,6 +372,7 @@ export interface DrawingInput {
   slug: string;
   title: string;
   brand: string;
+  model: string | null;
   imageUrl: string;
   hotspots: Hotspot[];
 }
@@ -492,6 +497,21 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
   ];
 }
 
+// Every brand + engine-model pair that has a listing or drawing, for the
+// /brands/[brand]/[model] hubs in the sitemap.
+export async function getBrandModels(): Promise<{ brand: string; model: string }[]> {
+  const db = getDb();
+  const [fromListings, fromDrawings] = await Promise.all([
+    db.selectDistinct({ brand: stockItems.brand, model: stockItems.model }).from(stockItems),
+    db.selectDistinct({ brand: drawings.brand, model: drawings.model }).from(drawings),
+  ]);
+  const seen = new Map<string, { brand: string; model: string }>();
+  for (const row of [...fromListings, ...fromDrawings]) {
+    if (row.model) seen.set(`${row.brand}\u0000${row.model}`, { brand: row.brand, model: row.model });
+  }
+  return Array.from(seen.values());
+}
+
 export interface StockOverview {
   newArrivals: StockListing[];
   expected: StockListing[];
@@ -515,4 +535,39 @@ export async function getStockOverview(limit = 6): Promise<StockOverview> {
     expected: expected.map(toListing),
     recentlySold: recentlySold.map(toListing),
   };
+}
+
+export interface BrandCatalog {
+  listings: StockListing[];
+  drawings: DrawingSummary[];
+}
+
+// Everything listed under one brand, for the /brands hubs. Models and
+// sections are grouped in the page; a brand's catalog is small.
+export async function getBrandCatalog(brand: string): Promise<BrandCatalog> {
+  const db = getDb();
+  const [listingRows, drawingRows] = await Promise.all([
+    db.select().from(stockItems).where(eq(stockItems.brand, brand)).orderBy(stockItems.category, stockItems.title),
+    db.select().from(drawings).where(eq(drawings.brand, brand)).orderBy(drawings.title),
+  ]);
+  return { listings: listingRows.map(toListing), drawings: drawingRows.map(toDrawingSummary) };
+}
+
+export interface BrandSummary {
+  brand: string;
+  listings: number;
+  models: string[];
+}
+
+export async function getBrandSummaries(): Promise<BrandSummary[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      brand: stockItems.brand,
+      listings: sql<number>`count(*)::int`,
+      models: sql<string[]>`coalesce(array_agg(distinct ${stockItems.model}) filter (where ${stockItems.model} is not null), '{}')`,
+    })
+    .from(stockItems)
+    .groupBy(stockItems.brand);
+  return rows.map((row) => ({ ...row, models: [...row.models].sort() }));
 }

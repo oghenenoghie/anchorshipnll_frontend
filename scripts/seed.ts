@@ -13,6 +13,7 @@ async function main() {
         slug: drawing.slug,
         title: drawing.title,
         brand: drawing.brand,
+        model: drawing.model,
         imageUrl: drawing.imageUrl,
         hotspots: drawing.hotspots,
       })
@@ -21,6 +22,7 @@ async function main() {
         set: {
           title: drawing.title,
           brand: drawing.brand,
+          model: drawing.model,
           imageUrl: drawing.imageUrl,
           hotspots: drawing.hotspots,
           updatedAt: new Date(),
@@ -37,6 +39,7 @@ async function main() {
         title: listing.title,
         subtitle: listing.subtitle,
         brand: listing.brand,
+        model: listing.model,
         category: listing.category,
         oemNumbers: listing.oemNumbers,
         status: listing.status,
@@ -50,6 +53,7 @@ async function main() {
           title: listing.title,
           subtitle: listing.subtitle,
           brand: listing.brand,
+          model: listing.model,
           category: listing.category,
           oemNumbers: listing.oemNumbers,
           status: listing.status,

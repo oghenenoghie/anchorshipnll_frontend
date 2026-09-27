@@ -1,5 +1,7 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { absoluteUrl } from "@/lib/site";
+import { brandSlug, modelHref } from "@/lib/data/stock";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ExplodedDrawing } from "@/components/drawings/exploded-drawing";
@@ -35,7 +37,17 @@ export default async function DrawingDetailPage({ params }: { params: { slug: st
       />
 
       <p className="mt-6 font-body text-label font-medium uppercase text-blueprint">
-        {drawing.brand}
+        <Link href={`/brands/${brandSlug(drawing.brand)}`} className="hover:underline">
+          {drawing.brand}
+        </Link>
+        {drawing.model && (
+          <>
+            {" · "}
+            <Link href={modelHref(drawing.brand, drawing.model)} className="font-mono normal-case hover:underline">
+              {drawing.model}
+            </Link>
+          </>
+        )}
       </p>
       <h1 className="mt-2 font-display text-display-lg font-bold text-hull">{drawing.title}</h1>
       <p className="mt-3 max-w-xl font-body text-steel">

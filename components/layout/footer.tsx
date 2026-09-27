@@ -7,8 +7,9 @@ const COLUMNS = [
       { href: "/parts", label: "Spare parts" },
       { href: "/engines", label: "Complete engines" },
       { href: "/stock", label: "New & expected stock" },
-      { href: "/parts?brand=wartsila", label: "Wärtsilä" },
-      { href: "/parts?brand=man", label: "MAN" },
+      { href: "/brands", label: "All brands" },
+      { href: "/brands/wartsila", label: "Wärtsilä" },
+      { href: "/brands/man", label: "MAN" },
     ],
   },
   {

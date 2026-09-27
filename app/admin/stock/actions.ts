@@ -62,6 +62,7 @@ function readInput(formData: FormData): { input: StockItemInput; missing: string
   const title = String(formData.get("title") ?? "").trim();
   const subtitle = String(formData.get("subtitle") ?? "").trim();
   const brand = String(formData.get("brand") ?? "").trim();
+  const model = String(formData.get("model") ?? "").trim().slice(0, 60) || null;
   const category = String(formData.get("category") ?? "").trim();
   const status = String(formData.get("status") ?? "").trim();
   const quantityRaw = String(formData.get("quantity") ?? "").trim();
@@ -87,6 +88,7 @@ function readInput(formData: FormData): { input: StockItemInput; missing: string
       title,
       subtitle,
       brand,
+      model,
       category: category as StockCategoryValue,
       status: status as StockStatusValue,
       quantity,
