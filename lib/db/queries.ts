@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
-import { getDb } from "./index";
+import { getDb, getPublicDb } from "./index";
 import {
   drawings,
   enquiries,
@@ -91,7 +91,7 @@ export async function getListings(
   category: StockCategory,
   filters: StockFilters,
 ): Promise<ListingSearchResult> {
-  const db = getDb();
+  const db = getPublicDb();
   const conditions: SQL[] = [eq(stockItems.category, category)];
 
   if (filters.brands.length > 0) {
@@ -145,7 +145,7 @@ export interface FacetCounts {
 }
 
 export async function getFacetCounts(category: StockCategory): Promise<FacetCounts> {
-  const db = getDb();
+  const db = getPublicDb();
 
   const [brandRows, statusRows] = await Promise.all([
     db
@@ -180,7 +180,7 @@ export const getListingBySku = cache(async function getListingBySku(
   category: StockCategory,
   sku: string,
 ): Promise<StockListing | undefined> {
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db
     .select()
     .from(stockItems)
@@ -195,14 +195,14 @@ export async function findListingBySku(sku: string): Promise<StockListing | unde
   const trimmed = sku.trim();
   if (!trimmed) return undefined;
 
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db.select().from(stockItems).where(ilike(stockItems.sku, trimmed)).limit(1);
 
   return rows[0] ? toListing(rows[0]) : undefined;
 }
 
 export async function getRelatedListings(item: StockListing, limit = 3): Promise<StockListing[]> {
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db
     .select()
     .from(stockItems)
@@ -329,7 +329,7 @@ async function resolveHotspots(hotspots: Hotspot[]): Promise<ResolvedHotspot[]> 
   const skus = hotspots.map((h) => h.sku).filter((sku): sku is string => Boolean(sku));
   if (skus.length === 0) return hotspots.map((h) => ({ ...h }));
 
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db.select().from(stockItems).where(inArray(stockItems.sku, skus));
   const bySku = new Map(rows.map((row) => [row.sku, toListing(row)]));
 
@@ -340,14 +340,14 @@ async function resolveHotspots(hotspots: Hotspot[]): Promise<ResolvedHotspot[]> 
 }
 
 export async function getAllDrawings(): Promise<DrawingSummary[]> {
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db.select().from(drawings).orderBy(drawings.title);
   return rows.map(toDrawingSummary);
 }
 
 // cache(): see getListingBySku.
 export const getDrawingBySlug = cache(async function getDrawingBySlug(slug: string): Promise<DrawingDetail | undefined> {
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db.select().from(drawings).where(eq(drawings.slug, slug)).limit(1);
   const row = rows[0];
   if (!row) return undefined;
@@ -358,7 +358,7 @@ export const getDrawingBySlug = cache(async function getDrawingBySlug(slug: stri
 // Reverse lookup for the "find this on the exploded diagram" cross-link on
 // listing detail pages — scans the jsonb hotspots array for this sku.
 export async function getDrawingsForSku(sku: string): Promise<DrawingSummary[]> {
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db
     .select()
     .from(drawings)
@@ -430,10 +430,12 @@ export interface EnquiryInput {
   photos?: EnquiryPhoto[];
 }
 
-export async function createEnquiry(input: EnquiryInput): Promise<Enquiry> {
-  const db = getDb();
-  const [row] = await db.insert(enquiries).values(input).returning();
-  return row;
+// Runs as web_public, which may insert enquiries but not read them back, so
+// the id is generated here instead of using RETURNING.
+export async function createEnquiry(input: EnquiryInput): Promise<{ id: string }> {
+  const id = crypto.randomUUID();
+  await getPublicDb().insert(enquiries).values({ ...input, id });
+  return { id };
 }
 
 export async function markEnquiryEmailSent(id: string): Promise<void> {
@@ -481,7 +483,7 @@ export interface SitemapEntry {
 
 // Every public listing (sold ones stay live as reference) and drawing.
 export async function getSitemapEntries(): Promise<SitemapEntry[]> {
-  const db = getDb();
+  const db = getPublicDb();
   const [listings, diagrams] = await Promise.all([
     db
       .select({ sku: stockItems.sku, category: stockItems.category, updatedAt: stockItems.updatedAt })
@@ -500,7 +502,7 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
 // Every brand + engine-model pair that has a listing or drawing, for the
 // /brands/[brand]/[model] hubs in the sitemap.
 export async function getBrandModels(): Promise<{ brand: string; model: string }[]> {
-  const db = getDb();
+  const db = getPublicDb();
   const [fromListings, fromDrawings] = await Promise.all([
     db.selectDistinct({ brand: stockItems.brand, model: stockItems.model }).from(stockItems),
     db.selectDistinct({ brand: drawings.brand, model: drawings.model }).from(drawings),
@@ -521,7 +523,7 @@ export interface StockOverview {
 // The /stock page: what's just come in, what's on its way, and what recently
 // sold (sold listings stay live as a trust signal).
 export async function getStockOverview(limit = 6): Promise<StockOverview> {
-  const db = getDb();
+  const db = getPublicDb();
   const byStatus = (status: StockStatusValue, order: SQL) =>
     db.select().from(stockItems).where(eq(stockItems.status, status)).orderBy(order).limit(limit);
 
@@ -545,7 +547,7 @@ export interface BrandCatalog {
 // Everything listed under one brand, for the /brands hubs. Models and
 // sections are grouped in the page; a brand's catalog is small.
 export async function getBrandCatalog(brand: string): Promise<BrandCatalog> {
-  const db = getDb();
+  const db = getPublicDb();
   const [listingRows, drawingRows] = await Promise.all([
     db.select().from(stockItems).where(eq(stockItems.brand, brand)).orderBy(stockItems.category, stockItems.title),
     db.select().from(drawings).where(eq(drawings.brand, brand)).orderBy(drawings.title),
@@ -560,7 +562,7 @@ export interface BrandSummary {
 }
 
 export async function getBrandSummaries(): Promise<BrandSummary[]> {
-  const db = getDb();
+  const db = getPublicDb();
   const rows = await db
     .select({
       brand: stockItems.brand,

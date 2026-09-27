@@ -94,7 +94,12 @@ CI, which has no `DATABASE_URL` — never touches the database and stays
 static/dynamic-classified correctly without needing DB credentials at build
 time.
 
-- `DATABASE_URL` — pooled connection string, used at runtime.
+- `DATABASE_URL` — pooled connection string, used at runtime by the admin.
+- `DATABASE_URL_PUBLIC` — optional pooled connection string for the
+  `web_public` role (`getPublicDb()`). Public pages and the enquiry forms go
+  through it: that role can only read `stock_items` and `drawings` and insert
+  new enquiries, enforced by grants plus row-level security (migration 0008).
+  Unset, it falls back to `DATABASE_URL`.
 - `DIRECT_URL` — unpooled connection string, used only for Drizzle migrations.
 - Schema lives in `lib/db/schema.ts` (`stock_items`, plus `stock_status` and
   `stock_category` enums); run `npm run db:generate` then `npm run db:migrate`

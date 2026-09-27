@@ -57,6 +57,13 @@
       "when": 1790540510626,
       "tag": "0007_engine_models",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790541195639,
+      "tag": "0008_public_role_rls",
+      "breakpoints": true
     }
   ]
 }
