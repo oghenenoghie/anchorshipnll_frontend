@@ -31,6 +31,14 @@ export interface StockImage {
   alt: string;
 }
 
+// A photo a seller attached to a sell-to-us enquiry, in the private enquiry
+// bucket (see lib/storage.ts). `name` is the file name as uploaded, for the
+// admin's reference only.
+export interface EnquiryPhoto {
+  key: string;
+  name: string;
+}
+
 export interface SpecRow {
   label: string;
   value: string;
@@ -114,6 +122,7 @@ export const enquiries = pgTable(
     brand: text("brand"),
     location: text("location"),
     message: text("message").notNull().default(""),
+    photos: jsonb("photos").$type<EnquiryPhoto[]>().notNull().default([]),
     emailSent: boolean("email_sent").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

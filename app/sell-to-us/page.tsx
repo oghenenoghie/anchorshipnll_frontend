@@ -3,6 +3,8 @@ import { submitSellToUs } from "./actions";
 import { Field, inputClass } from "@/components/ui/form-field";
 import { FormStatusBanner } from "@/components/ui/form-status";
 import { buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { SellPhotoPicker } from "@/components/sell-photo-picker";
 import { firstParam, paramValues, type SearchParams } from "@/lib/search-params";
 
 export const metadata: Metadata = {
@@ -17,6 +19,7 @@ const FIELD_ERROR: Record<string, string> = {
   email: "Enter a valid email address.",
   brand: "Enter the brand or manufacturer.",
   description: "Tell us what you're selling.",
+  photos: "Photos weren't accepted — attach up to 6 JPEG, PNG, WebP or AVIF images, 10 MB each, and send again.",
 };
 
 const STEPS = [
@@ -57,7 +60,7 @@ export default function SellToUsPage({ searchParams }: { searchParams: SearchPar
     description: firstParam(searchParams, "description"),
   };
 
-  const hasFieldErrors = ["name", "company", "email", "brand", "description"].some((k) =>
+  const hasFieldErrors = ["name", "company", "email", "brand", "description", "photos"].some((k) =>
     missing.has(k),
   );
 
@@ -238,15 +241,21 @@ export default function SellToUsPage({ searchParams }: { searchParams: SearchPar
                     name="description"
                     rows={6}
                     required
-                    placeholder="Model, part numbers, condition, quantity, and whether photos are available…"
+                    placeholder="Model, part numbers, condition, quantity…"
                     defaultValue={defaults.description}
                     className={inputClass(missing.has("description"))}
                   />
                 </Field>
 
-                <button type="submit" className={buttonVariants({ variant: "primary" })}>
-                  Send details
-                </button>
+                <Field
+                  label="Photos"
+                  htmlFor="photos"
+                  error={missing.has("photos") ? FIELD_ERROR.photos : undefined}
+                >
+                  <SellPhotoPicker hasError={missing.has("photos")} />
+                </Field>
+
+                <SubmitButton pendingLabel="Sending…">Send details</SubmitButton>
               </form>
             )}
           </div>

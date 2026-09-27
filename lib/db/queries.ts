@@ -9,6 +9,7 @@ import {
   type Hotspot,
   type SpecRow,
   type StockCategoryValue,
+  type EnquiryPhoto,
   type StockImage,
   type StockStatusValue,
 } from "./schema";
@@ -416,6 +417,7 @@ export interface EnquiryInput {
   brand?: string | null;
   location?: string | null;
   message?: string;
+  photos?: EnquiryPhoto[];
 }
 
 export async function createEnquiry(input: EnquiryInput): Promise<Enquiry> {

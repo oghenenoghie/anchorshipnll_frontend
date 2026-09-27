@@ -43,6 +43,13 @@
       "when": 1790503920891,
       "tag": "0005_fuzzy_search",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790538177123,
+      "tag": "0006_enquiry_photos",
+      "breakpoints": true
     }
   ]
 }
