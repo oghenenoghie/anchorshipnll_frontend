@@ -6,6 +6,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/sessio
 import { logout } from "./login/actions";
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: false },
   title: {
     default: "Admin",
     template: "%s — Admin — AnchorShip NL",

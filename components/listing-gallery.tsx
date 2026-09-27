@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import Counter from "yet-another-react-lightbox/plugins/counter";
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/counter.css";
 import { StatusBadge, type StockStatus } from "@/components/ui/status-badge";
 import type { ListingImage } from "@/lib/db/queries";
 import { cn } from "@/lib/utils";
@@ -16,6 +21,7 @@ export function ListingGallery({
   images: ListingImage[];
 }) {
   const [selected, setSelected] = useState(0);
+  const [open, setOpen] = useState(false);
   const current = images[selected] ?? images[0];
 
   if (!current) {
@@ -29,11 +35,12 @@ export function ListingGallery({
 
   return (
     <div>
-      <a
-        href={current.url}
-        target="_blank"
-        rel="noopener"
-        className="relative block aspect-square overflow-hidden rounded-md border border-border bg-snow"
+      {/* Buyers inspect wear up close, so the main photo opens a full-screen
+          viewer with pinch, scroll-wheel and double-tap zoom. */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border border-border bg-snow"
       >
         <Image
           src={current.url}
@@ -44,8 +51,26 @@ export function ListingGallery({
           className="object-contain"
         />
         <StatusBadge status={status} className="absolute right-3 top-3" />
-        <span className="sr-only">Open full-size photo</span>
-      </a>
+        <span className="absolute bottom-3 right-3 rounded-md bg-hull/75 px-2 py-1 font-body text-xs text-paper">
+          Tap to zoom
+        </span>
+      </button>
+
+      <Lightbox
+        open={open}
+        close={() => setOpen(false)}
+        index={selected}
+        on={{ view: ({ index }) => setSelected(index) }}
+        slides={images.map((image) => ({ src: image.url, alt: image.alt || alt }))}
+        plugins={[Zoom, Counter]}
+        zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+        carousel={{ finite: true }}
+        controller={{ closeOnBackdropClick: true }}
+        styles={{ container: { backgroundColor: "#0E1621" } }}
+        render={
+          images.length > 1 ? undefined : { buttonPrev: () => null, buttonNext: () => null }
+        }
+      />
 
       {images.length > 1 && (
         <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-5">

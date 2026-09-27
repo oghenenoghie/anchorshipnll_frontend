@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "./index";
 import {
@@ -170,7 +171,10 @@ export async function getFacetCounts(category: StockCategory): Promise<FacetCoun
   return { brands, statuses };
 }
 
-export async function getListingBySku(
+// cache(): generateMetadata and the page both look the listing up, and
+// queries aren't fetch-cached (see lib/db/index.ts), so this dedupes the two
+// calls within one request.
+export const getListingBySku = cache(async function getListingBySku(
   category: StockCategory,
   sku: string,
 ): Promise<StockListing | undefined> {
@@ -182,7 +186,7 @@ export async function getListingBySku(
     .limit(1);
 
   return rows[0] ? toListing(rows[0]) : undefined;
-}
+});
 
 // Used to resolve a ?sku= prefill on the RFQ/contact forms, where the category isn't known.
 export async function findListingBySku(sku: string): Promise<StockListing | undefined> {
@@ -337,14 +341,15 @@ export async function getAllDrawings(): Promise<DrawingSummary[]> {
   return rows.map(toDrawingSummary);
 }
 
-export async function getDrawingBySlug(slug: string): Promise<DrawingDetail | undefined> {
+// cache(): see getListingBySku.
+export const getDrawingBySlug = cache(async function getDrawingBySlug(slug: string): Promise<DrawingDetail | undefined> {
   const db = getDb();
   const rows = await db.select().from(drawings).where(eq(drawings.slug, slug)).limit(1);
   const row = rows[0];
   if (!row) return undefined;
 
   return { ...toDrawingSummary(row), hotspots: await resolveHotspots(row.hotspots) };
-}
+});
 
 // Reverse lookup for the "find this on the exploded diagram" cross-link on
 // listing detail pages — scans the jsonb hotspots array for this sku.
@@ -462,4 +467,27 @@ export async function setEnquiryStatus(id: string, status: EnquiryStatusValue): 
 export async function deleteEnquiry(id: string): Promise<void> {
   const db = getDb();
   await db.delete(enquiries).where(eq(enquiries.id, id));
+}
+
+export interface SitemapEntry {
+  path: string;
+  updatedAt: Date;
+}
+
+// Every public listing (sold ones stay live as reference) and drawing.
+export async function getSitemapEntries(): Promise<SitemapEntry[]> {
+  const db = getDb();
+  const [listings, diagrams] = await Promise.all([
+    db
+      .select({ sku: stockItems.sku, category: stockItems.category, updatedAt: stockItems.updatedAt })
+      .from(stockItems),
+    db.select({ slug: drawings.slug, updatedAt: drawings.updatedAt }).from(drawings),
+  ]);
+  return [
+    ...listings.map((row) => ({
+      path: `/${row.category === "engine" ? "engines" : "parts"}/${encodeURIComponent(row.sku)}`,
+      updatedAt: row.updatedAt,
+    })),
+    ...diagrams.map((row) => ({ path: `/drawings/${encodeURIComponent(row.slug)}`, updatedAt: row.updatedAt })),
+  ];
 }
