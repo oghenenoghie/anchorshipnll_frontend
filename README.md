@@ -137,6 +137,12 @@ The database only stores each photo's key and description, in
 - **Display:** pages build the public URL from `NEON_STORAGE_ENDPOINT` and serve
   it through `next/image`, which resizes and converts to AVIF/WebP. Without
   storage env vars, listings fall back to a placeholder and uploads return 503.
+- **Drawings:** the admin drawing form uploads its image through the same
+  route with `kind=drawing` (PNG, WebP or SVG line art — never JPEG), stored
+  under `drawings/<uuid>.<ext>`. SVGs containing scripts, event handlers,
+  `javascript:` URLs or embedded HTML are refused. A path such as
+  `/drawings/example.svg` can still be typed instead. Replacing or deleting a
+  drawing deletes its old uploaded image.
 - **Branches:** storage branches with the database, so a preview branch sees
   the parent's photos and its own uploads stay on that branch.
 

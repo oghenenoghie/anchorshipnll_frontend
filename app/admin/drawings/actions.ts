@@ -6,12 +6,21 @@ import { requireAdmin } from "@/lib/auth/admin";
 import {
   createDrawing,
   deleteDrawing,
+  getDrawingByIdAdmin,
   isUniqueViolation,
   updateDrawing,
   type DrawingInput,
 } from "@/lib/db/queries";
 import type { Hotspot } from "@/lib/db/schema";
 import { BRANDS } from "@/lib/data/stock";
+import { deletePhotos, drawingKeyFromUrl } from "@/lib/storage";
+
+// Deletes an uploaded drawing image that's no longer used. Bundled
+// /drawings/*.svg paths and outside URLs are left alone.
+async function deleteDrawingImage(url: string | undefined): Promise<void> {
+  const key = url ? drawingKeyFromUrl(url) : null;
+  if (key) await deletePhotos([key]);
+}
 
 function buildQuery(params: Record<string, string | undefined>): string {
   const qs = new URLSearchParams();
@@ -89,6 +98,7 @@ export async function updateDrawingAction(id: string, formData: FormData): Promi
     redirect(`/admin/drawings/${id}/edit?${buildQuery({ error: "1", missing: missing.join(",") })}`);
   }
 
+  const previous = await getDrawingByIdAdmin(id);
   let failure: string | undefined;
   let notFound = false;
   try {
@@ -103,6 +113,8 @@ export async function updateDrawingAction(id: string, formData: FormData): Promi
     redirect(`/admin/drawings/${id}/edit?${buildQuery({ error: "1", missing: failure })}`);
   }
 
+  if (previous && previous.imageUrl !== input.imageUrl) await deleteDrawingImage(previous.imageUrl);
+
   revalidatePath("/admin/drawings");
   revalidatePath("/drawings");
   revalidatePath(`/drawings/${input.slug}`);
@@ -111,7 +123,9 @@ export async function updateDrawingAction(id: string, formData: FormData): Promi
 
 export async function deleteDrawingAction(id: string): Promise<void> {
   await requireAdmin();
+  const drawing = await getDrawingByIdAdmin(id);
   await deleteDrawing(id);
+  await deleteDrawingImage(drawing?.imageUrl);
 
   revalidatePath("/admin/drawings");
   revalidatePath("/drawings");

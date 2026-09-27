@@ -1,6 +1,6 @@
 import { Field, inputClass } from "@/components/ui/form-field";
 import { buttonVariants } from "@/components/ui/button";
-import { HotspotEditor } from "@/components/admin/hotspot-editor";
+import { DrawingImageEditor } from "@/components/admin/drawing-image-editor";
 import { BRANDS } from "@/lib/data/stock";
 import type { DrawingDetail } from "@/lib/db/queries";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ const FIELD_ERROR: Record<string, string> = {
   slug: "Enter a URL slug.",
   title: "Enter a title.",
   brand: "Choose a brand.",
-  imageUrl: "Enter an image path or URL.",
+  imageUrl: "Upload a drawing image or enter its path.",
   slug_taken: "That slug is already in use — choose another.",
   save_failed: "Something went wrong saving this diagram. Please try again.",
 };
@@ -83,32 +83,14 @@ export function DrawingForm({
             ))}
           </select>
         </Field>
-
-        <Field
-          label="Image path / URL"
-          htmlFor="imageUrl"
-          required
-          error={missing.has("imageUrl") ? FIELD_ERROR.imageUrl : undefined}
-        >
-          <input
-            id="imageUrl"
-            name="imageUrl"
-            type="text"
-            required
-            placeholder="/drawings/example.svg"
-            defaultValue={defaults?.imageUrl}
-            className={cn(inputClass(missing.has("imageUrl")), "font-mono")}
-          />
-        </Field>
       </div>
 
-      {defaults?.imageUrl && (
-        <HotspotEditor
-          imageUrl={defaults.imageUrl}
-          initialHotspots={defaults.hotspots ?? []}
-          stockItems={stockItems}
-        />
-      )}
+      <DrawingImageEditor
+        defaultImageUrl={defaults?.imageUrl}
+        initialHotspots={defaults?.hotspots ?? []}
+        stockItems={stockItems}
+        error={missing.has("imageUrl") ? FIELD_ERROR.imageUrl : undefined}
+      />
 
       <button type="submit" className={buttonVariants({ variant: "primary" })}>
         {submitLabel}
