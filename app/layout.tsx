@@ -22,6 +22,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full`}
     >
+      <head>
+        <noscript>
+          <style>{"[data-fade-in]{opacity:1!important;transform:none!important}"}</style>
+        </noscript>
+      </head>
       <body className="flex min-h-full flex-col bg-surface-0 font-body text-hull antialiased">
         <Header />
         <main className="flex-1">{children}</main>
