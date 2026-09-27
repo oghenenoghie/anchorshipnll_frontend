@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { absoluteUrl } from "@/lib/site";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ExplodedDrawing } from "@/components/drawings/exploded-drawing";
@@ -9,9 +10,13 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const drawing = await getDrawingBySlug(params.slug);
   if (!drawing) return {};
+  const description = `Interactive exploded diagram for ${drawing.title} — tap a callout to view the part.`;
+  const path = `/drawings/${encodeURIComponent(drawing.slug)}`;
   return {
     title: drawing.title,
-    description: `Interactive exploded diagram for ${drawing.title} — tap a callout to view the part.`,
+    description,
+    alternates: { canonical: path },
+    openGraph: { type: "website", title: drawing.title, description, url: path, images: [{ url: absoluteUrl(drawing.imageUrl), alt: drawing.title }] },
   };
 }
 
