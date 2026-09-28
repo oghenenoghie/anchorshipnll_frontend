@@ -4,6 +4,7 @@ export const KIND_LABEL: Record<EnquiryKindValue, string> = {
   rfq: "RFQ",
   contact: "Contact",
   sell_to_us: "Sell to us",
+  vessel: "Vessel enquiry",
 };
 
 export const STATUS_LABEL: Record<EnquiryStatusValue, string> = {

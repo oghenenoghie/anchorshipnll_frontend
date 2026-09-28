@@ -174,6 +174,41 @@ page, served through the session-checked `GET /api/admin/enquiry-photos/<key>`;
 deleting the enquiry deletes its photos. `next.config.mjs` raises the server
 action body limit to 64 MB for these uploads.
 
+## Vessel marketplace
+
+The ship-brokerage side of the site lives under `/vessels`, next to the parts
+and engines catalogue.
+
+- **Taxonomy:** `vessel_categories` is a two-level tree (e.g. Barge → Deck
+  Barge), seeded by migration 0010 with the reference site's categories.
+  Placeholder-looking labels ("Mobile 1", "Outbound Engines") are flagged
+  `needs_review`.
+- **Listings:** `vessels`, with photos in `vessel_images` (object keys, like
+  `stock_items.images`) and grouped key/value data in `vessel_specs`. A vessel
+  points at its most specific category.
+- **Statuses:** `published`, `under_offer`, `sold` and `chartered` are public;
+  `draft` and `archived` are admin-only. RLS enforces this for `web_public`,
+  and the queries in `lib/db/vessels.ts` filter on it too.
+- **Routes:**
+  - `/vessels` (plus `?type=sale|charter`)
+  - `/vessels/[category]`
+  - `/vessels/[category]/[subcategory]`
+  - `/vessels/[category]/[subcategory]/[slug]`
+  - `/vessels/search`
+  - Old `/listings/...` addresses redirect.
+- **Filters:** all in the URL and applied in SQL, 12 results per page.
+- **Search:** keyword search needs every word to appear in `search_key`,
+  maintained by a trigger. The key includes category names and spec values,
+  so "wartsila" finds vessels by engine. With no exact hit, search falls back
+  to per-word trigram matches.
+- **Parts links:** machinery specs that name a catalogued engine brand and
+  model link to that model's parts hub (`lib/vessel-parts-links.ts`).
+- **Enquiries:** vessel enquiries are stored in `enquiries` with
+  `kind = 'vessel'` and a `vessel_id`. The form has a honeypot and an
+  in-memory per-IP rate limit (`lib/rate-limit.ts`).
+- **Sample data:** `npm run db:seed` adds 20 fictional sample vessels
+  (`is_demo`), shown with a "Sample listing" badge.
+
 ## Admin
 
 `/admin` is a CRUD UI over `stock_items` (plus `drawings`, and the `enquiries` inbox above) — create, edit, and delete listings

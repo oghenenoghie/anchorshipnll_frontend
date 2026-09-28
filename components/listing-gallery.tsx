@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
@@ -11,24 +11,35 @@ import { StatusBadge, type StockStatus } from "@/components/ui/status-badge";
 import type { ListingImage } from "@/lib/db/queries";
 import { cn } from "@/lib/utils";
 
+// Photos with a full-screen zoom viewer. Parts pass a stock `status`;
+// vessels pass their own `badge`, a wider `aspectClass` and a `placeholder`.
 export function ListingGallery({
   status,
+  badge,
   alt,
   images,
+  aspectClass = "aspect-square",
+  fit = "contain",
+  placeholder,
 }: {
-  status: StockStatus;
+  status?: StockStatus;
+  badge?: ReactNode;
   alt: string;
-  images: ListingImage[];
+  images: Pick<ListingImage, "key" | "url" | "alt">[];
+  aspectClass?: string;
+  fit?: "contain" | "cover";
+  placeholder?: ReactNode;
 }) {
   const [selected, setSelected] = useState(0);
   const [open, setOpen] = useState(false);
   const current = images[selected] ?? images[0];
+  const overlay = badge ?? (status ? <StatusBadge status={status} className="absolute right-3 top-3" /> : null);
 
   if (!current) {
     return (
-      <div className="relative flex aspect-square items-center justify-center rounded-md border border-border bg-snow">
-        <StatusBadge status={status} className="absolute right-3 top-3" />
-        <span className="font-mono text-xs text-fog">[ photos on request ]</span>
+      <div className={cn("relative flex items-center justify-center overflow-hidden rounded-md border border-border bg-snow", aspectClass)}>
+        {placeholder ?? <span className="font-mono text-xs text-fog">[ photos on request ]</span>}
+        {overlay}
       </div>
     );
   }
@@ -40,17 +51,18 @@ export function ListingGallery({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border border-border bg-snow"
+        aria-label={`Open photo ${selected + 1} of ${images.length} full screen`}
+        className={cn("relative block w-full cursor-zoom-in overflow-hidden rounded-md border border-border bg-snow", aspectClass)}
       >
         <Image
           src={current.url}
           alt={current.alt || alt}
           fill
           priority={selected === 0}
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-contain"
+          sizes="(min-width: 1024px) 60vw, 100vw"
+          className={fit === "cover" ? "object-cover" : "object-contain"}
         />
-        <StatusBadge status={status} className="absolute right-3 top-3" />
+        {overlay}
         <span className="absolute bottom-3 right-3 rounded-md bg-hull/75 px-2 py-1 font-body text-xs text-paper">
           Tap to zoom
         </span>
@@ -86,7 +98,7 @@ export function ListingGallery({
                 index === selected ? "border-blueprint ring-1 ring-blueprint" : "border-border hover:border-border-strong",
               )}
             >
-              <Image src={image.url} alt="" fill sizes="120px" className="object-contain" />
+              <Image src={image.url} alt="" fill sizes="120px" className={fit === "cover" ? "object-cover" : "object-contain"} />
             </button>
           ))}
         </div>
