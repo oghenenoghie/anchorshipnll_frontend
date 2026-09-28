@@ -64,6 +64,20 @@
       "when": 1790541195639,
       "tag": "0008_public_role_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790603160597,
+      "tag": "0009_vessels",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790603207552,
+      "tag": "0010_vessel_search_rls_taxonomy",
+      "breakpoints": true
     }
   ]
 }

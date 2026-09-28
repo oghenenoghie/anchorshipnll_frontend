@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getEnquiryByIdAdmin } from "@/lib/db/queries";
+import { getVesselLabelAdmin } from "@/lib/db/vessels";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,8 +33,10 @@ export default async function AdminEnquiryPage({
     : firstParam(searchParams, "reopened") === "1"
       ? "Reopened."
       : undefined;
+  const vessel = enquiry.vesselId ? await getVesselLabelAdmin(enquiry.vesselId) : null;
   const nextStatus = enquiry.status === "new" ? "handled" : "new";
-  const replySubject = `Re: ${KIND_LABEL[enquiry.kind]}${enquiry.sku ? ` — ${enquiry.sku}` : ""}`;
+  const regarding = vessel ? `${vessel.title} (${vessel.ref})` : enquiry.sku;
+  const replySubject = `Re: ${KIND_LABEL[enquiry.kind]}${regarding ? ` — ${regarding}` : ""}`;
 
   const details: { label: string; value: string | null; mono?: boolean }[] = [
     { label: "Name", value: enquiry.name },
@@ -73,6 +76,22 @@ export default async function AdminEnquiryPage({
         <p className="mt-6 rounded-md border border-patina/30 bg-[rgb(110_139_123_/_0.10)] px-4 py-3 font-body text-sm text-hull">
           {notice}
         </p>
+      )}
+
+      {vessel && (
+        <div className="mt-8 rounded-md border border-border bg-surface-1 px-4 py-3 font-body text-sm">
+          <p className="text-label uppercase text-fog">Vessel</p>
+          <p className="mt-1 text-hull">
+            {vessel.href ? (
+              <Link href={vessel.href} className="font-semibold text-blueprint hover:underline">
+                {vessel.title}
+              </Link>
+            ) : (
+              <span className="font-semibold">{vessel.title}</span>
+            )}{" "}
+            <span className="font-mono text-xs data-num text-fog">{vessel.ref}</span>
+          </p>
+        </div>
       )}
 
       <dl className="mt-8 divide-y divide-border rounded-md border border-border font-body text-sm">

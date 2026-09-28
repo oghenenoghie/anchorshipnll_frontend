@@ -428,6 +428,7 @@ export interface EnquiryInput {
   location?: string | null;
   message?: string;
   photos?: EnquiryPhoto[];
+  vesselId?: string | null;
 }
 
 // Runs as web_public, which may insert enquiries but not read them back, so
